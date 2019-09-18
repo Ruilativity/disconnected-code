@@ -973,6 +973,11 @@ int main(int argc, char **argv) {
 
         // gaussian() and z2_src require normalization factor (1/sqrt(2))
         eta *= INV_SQRT2;
+      } else if(NoiseSrcType ==  "POINT") {
+        LatticeFermion eta00;
+        zN_src(eta00,1);
+	// Make a source only at the origin (0,0,0,0)
+        eta=where((Layout::latticeCoordinate(0)+ Layout::latticeCoordinate(1) + Layout::latticeCoordinate(2)+Layout::latticeCoordinate(3)) == 0,eta00,LatticeFermion(zero));
       } else if (NoiseSrcType == "GAUSSIAN") {
         gaussian(eta);
 
@@ -1110,6 +1115,11 @@ int main(int argc, char **argv) {
 
           // gaussian() and z2_src require normalization factor (1/sqrt(2))
           eta *= INV_SQRT2;
+        } else if(NoiseSrcType ==  "POINT") {
+          LatticeFermion eta00;
+          zN_src(eta00,1);
+          // Make a source only at the origin (0,0,0,0)
+          eta=where((Layout::latticeCoordinate(0)+ Layout::latticeCoordinate(1) + Layout::latticeCoordinate(2)+Layout::latticeCoordinate(3)) == 0,eta00,LatticeFermion(zero));
         } else if (NoiseSrcType == "GAUSSIAN") {
           gaussian(eta);
 
