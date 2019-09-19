@@ -160,7 +160,7 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 		}
 	}
 	else
-		p.link_dirs = {0,1,2,3,4,5,6,7};
+		p.link_dirs = [0,1,2,3,4,5,6,7];
 	
 	if (paramtop.count("link_max") > 0){
 		read(paramtop, "link_max", p.link_max);
@@ -884,7 +884,7 @@ int main(int argc, char **argv) {
 	}
 	
 	// Link length and directions
-	int link_max=input.param.Displacement_t.link_max;
+	int link_max=input.param.displacement.link_max;
 	multi1d<int> link_dirs=input.param.Displacement_t.link_dirs;
 	int num_disp=link_max*link_dirs.size()+1;
 	
@@ -1072,7 +1072,7 @@ int main(int argc, char **argv) {
 			
 			for (int dir_index=0; dir_index<link_dirs.size(); ++dir_index){
 				int mu = link_dirs[dir_index]%4;
-				idir= link_dirs[dir_index]/4;
+				int idir= link_dirs[dir_index]/4;
 				shift_psi = psi;
 				for (int d = 0; d < link_max+1; ++d) {
 					if ((dir_index!=0)&&(d==0)) continue;
