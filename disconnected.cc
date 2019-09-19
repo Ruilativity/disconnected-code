@@ -152,11 +152,12 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 	XMLReader paramtop(xml, path);
 	
 	// Fermion action for Low Precision Inverter
-	if (paramtop.count("link_dirs") > 0)
+	if (paramtop.count("link_dirs") > 0){
 		read(paramtop, "link_dirs", p.link_dirs);
-	for (int idir=0 ; idir<p.link_dirs.size() ; idir++){
-		if(p.link_dirs[idir]<0 || p.link_dirs[idir]>7)
-			QDPIO::cerr << "Error! Link direction should be within range [0,7]."<< std::endl;;
+		for (int idir=0 ; idir<p.link_dirs.size() ; idir++){
+			if(p.link_dirs[idir]<0 || p.link_dirs[idir]>7)
+				QDPIO::cerr << "Error! Link direction should be within range [0,7]."<< std::endl;;
+		}
 	}
 	else
 		p.link_dirs = {0,1,2,3,4,5,6,7};
@@ -290,7 +291,7 @@ struct ErrAnlyVars {
 	ErrAnlyVars() {
 	}
 	
-	ErrAnlyVars(int NumTs) {
+	ErrAnlyVars(int num_disp,int NumTs) {
 		TrM_inv_sum_LP.resize(num_disp, NUM_G, NumTs);
 		TrM_inv_sum_C.resize(num_disp, NUM_G, NumTs);
 		TrM_inv_LP_sqsum_r.resize(num_disp, NUM_G, NumTs);
@@ -891,8 +892,7 @@ int main(int argc, char **argv) {
 	LatticeFermion eta, psi;
 	
 	// Variables for error analysis
-	ErrAnlyVars errAnly(NumTs);
-	
+	ErrAnlyVars errAnly(num_disp,NumTs);
 	// Temp variables
 	Complex TrM_inv;
 	LatticeFermion chi, shift_psi;
