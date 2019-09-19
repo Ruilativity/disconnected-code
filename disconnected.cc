@@ -159,9 +159,11 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 				QDPIO::cerr << "Error! Link direction should be within range [0,7]."<< std::endl;;
 		}
 	}
-	else
-		multi1d<int> link_dirs{0,1,2,3,4,5,6,7};
-		p.link_dirs=linkdirs
+	else{
+		p.link_dirs.resize(8);
+		for(int i=0;i<8;i++)
+			p.link_dirs[i]=i;
+	}
 	
 	if (paramtop.count("link_max") > 0){
 		read(paramtop, "link_max", p.link_max);
@@ -856,6 +858,7 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < NumTs; ++i)
 		timeslices.push_back(input.param.noise_src.timeslices[i]);
 	
+	
 	if (dilute) {
 		QDPIO::cout << "Calculate disconnected contribution on timeslice = ";
 		for (int i = 0; i < timeslices.size(); ++i)
@@ -885,8 +888,10 @@ int main(int argc, char **argv) {
 	}
 	
 	// Link length and directions
+	std::vector<int> link_dirs;
+	for (int i = 0; i < input.param.displacement.link_dirs.size(); ++i)
+		timeslices.push_back(input.param.displacement.link_dirs[i]);
 	int link_max=input.param.displacement.link_max;
-	multi1d<int> link_dirs=input.param.displacement.link_dirs;
 	int num_disp=link_max*link_dirs.size()+1;
 	
 	// Noise source (eta) and Solution (psi)
@@ -1108,10 +1113,10 @@ int main(int argc, char **argv) {
 #ifdef CALC_ERR_ERR
 							TrM_inv_est_LP_sum[d+dir_index*link_max][g][t] += TrM_inv;
 #endif
-						}
-					}
-				}
-			}
+						}//multi3d<DComplex> TrM_inv_C_HP(num_disp, NUM_G, NumTs);
+					}//for (int g = 0; g < NUM_G; ++g)
+				}//for (int d = 0; d < link_max+1; ++d)
+			}//for (int dir_index=0; dir_index<link_dirs.size(); ++dir_index)
 			
 			
 			// Print time used
@@ -1199,25 +1204,24 @@ int main(int argc, char **argv) {
 				
 				for (int dir_index=0; dir_index<link_dirs.size(); ++dir_index){
 					int mu = link_dirs[dir_index]%4;
-					idir= link_dirs[dir_index]/4;
+					int idir= link_dirs[dir_index]/4;
 					shift_psi = psi;
 					for (int d = 0; d < link_max+1; ++d) {
 						if ((dir_index!=0)&&(d==0)) continue;
-							chi = shift_psi;
-							if (idir == 0) {
-								shift_psi = U[mu] * shift(chi, FORWARD, mu);
-							} else {
-								shift_psi = shift(adj(U[mu])*chi, BACKWARD, mu);
-							}
+						chi = shift_psi;
+						if (idir == 0) {
+							shift_psi = U[mu] * shift(chi, FORWARD, mu);
+						} else {
+							shift_psi = shift(adj(U[mu])*chi, BACKWARD, mu);
+						}
+						
+						for (int g = 0; g < NUM_G; ++g) {
+							corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
+							corr_fn_t = sumMulti(corr_fn, TS);
 							
-							for (int g = 0; g < NUM_G; ++g) {
-								corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
-								corr_fn_t = sumMulti(corr_fn, TS);
-								
-								// For the correction term, we don't need to add constant part Tr[2 kappa I]
-								for (int t = 0; t < NumTs; ++t)
-									TrM_inv_C_LP[d+dir_index*link_max][g][t] = corr_fn_t[timeslices[t]];
-							}
+							// For the correction term, we don't need to add constant part Tr[2 kappa I]
+							for (int t = 0; t < NumTs; ++t)
+								TrM_inv_C_LP[d+dir_index*link_max][g][t] = corr_fn_t[timeslices[t]];
 						}
 					}
 				}
@@ -1239,7 +1243,7 @@ int main(int argc, char **argv) {
 				HP_inv_called = true;
 				
 				// Calculate psi by using Dirac Inverter with High Precision
-				SystemSolverResults_t res = (*PP_HP)(psi, chi);
+				res = (*PP_HP)(psi, chi);
 				
 				// Hopping parameter expansion (HPE)
 				if (use_HPE) do_HPE(kappa, psi, M);
@@ -1249,25 +1253,24 @@ int main(int argc, char **argv) {
 				
 				for (int dir_index=0; dir_index<link_dirs.size(); ++dir_index){
 					int mu = link_dirs[dir_index]%4;
-					idir= link_dirs[dir_index]/4;
+					int idir= link_dirs[dir_index]/4;
 					shift_psi = psi;
 					for (int d = 0; d < link_max+1; ++d) {
 						if ((dir_index!=0)&&(d==0)) continue;
-							chi = shift_psi;
-							if (idir == 0) {
-								shift_psi = U[mu] * shift(chi, FORWARD, mu);
-							} else {
-								shift_psi = shift(adj(U[mu])*chi, BACKWARD, mu);
-							}
+						chi = shift_psi;
+						if (idir == 0) {
+							shift_psi = U[mu] * shift(chi, FORWARD, mu);
+						} else {
+							shift_psi = shift(adj(U[mu])*chi, BACKWARD, mu);
+						}
+						
+						for (int g = 0; g < NUM_G; ++g) {
+							corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
+							corr_fn_t = sumMulti(corr_fn, TS);
 							
-							for (int g = 0; g < NUM_G; ++g) {
-								corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
-								corr_fn_t = sumMulti(corr_fn, TS);
-								
-								// For the correction term, we don't need to add constant part Tr[2 kappa I]
-								for (int t = 0; t < NumTs; ++t)
-									TrM_inv_C_HP[d+dir_index*link_max][g][t] = corr_fn_t[timeslices[t]];
-							}
+							// For the correction term, we don't need to add constant part Tr[2 kappa I]
+							for (int t = 0; t < NumTs; ++t)
+								TrM_inv_C_HP[d+dir_index*link_max][g][t] = corr_fn_t[timeslices[t]];
 						}
 					}
 				}
@@ -1315,7 +1318,7 @@ int main(int argc, char **argv) {
 				// Check whether restart is needed
 				if (count_lp == restart_NrLP && !Restarted) {
 					double ratio_C_LP_err, s_err_max, s_err_av;
-					check_acc(count_lp, count_hp, errAnly, timeslices, ratio_C_LP_err,
+					check_acc(count_lp, count_hp, errAnly, link_dirs, link_max, timeslices, ratio_C_LP_err,
 							  s_err_max, s_err_av);
 					
 					// Restart the loop with new LP inverter parameters if the error of
@@ -1330,7 +1333,7 @@ int main(int argc, char **argv) {
 						count_hp = 0;
 						HP_inv_called = false;
 						Restarted = true;
-						errAnly = ErrAnlyVars(NumTs);
+						errAnly = ErrAnlyVars(num_disp,NumTs);
 						PP_LP = S_f_LP->qprop(stateLP, input.param.noise_src.invParamLP_r);
 						// Note that checkout order is not reinitialized; it will be proceed from where it is
 					}  // if (ratio_C_LP_err > restart_factor)
@@ -1343,7 +1346,7 @@ int main(int argc, char **argv) {
 			if (count_lp >= Min_Nr_LP) {
 				// Calculate error of scalar channel (maximum value among timeslices)
 				double ratio_C_LP_err, s_err_max, s_err_av;
-				check_acc(count_lp, count_hp, errAnly, timeslices, ratio_C_LP_err,
+				check_acc(count_lp, count_hp, errAnly,link_dirs,link_max, timeslices, ratio_C_LP_err,
 						  s_err_max, s_err_av);
 				
 				QDPIO::cout << "count_lp = " << count_lp << ", Cr_err / LP_err = "
@@ -1390,7 +1393,7 @@ int main(int argc, char **argv) {
 						
 						if (chkout) {
 							// checkout
-							checkout(count_lp, count_hp, errAnly, checkp[idx_cp].OutFileName,link_dirs,link_max
+							checkout(count_lp, count_hp, errAnly, checkp[idx_cp].OutFileName,link_dirs,link_max,
 									 timeslices, checkp[idx_cp].chkout_order, Restarted);
 							checkp[idx_cp].chkout_order++;
 							
