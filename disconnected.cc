@@ -160,7 +160,8 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 		}
 	}
 	else
-		p.link_dirs = [0,1,2,3,4,5,6,7];
+		multi1d<int> link_dirs{0,1,2,3,4,5,6,7};
+		p.link_dirs=linkdirs
 	
 	if (paramtop.count("link_max") > 0){
 		read(paramtop, "link_max", p.link_max);
@@ -885,7 +886,7 @@ int main(int argc, char **argv) {
 	
 	// Link length and directions
 	int link_max=input.param.displacement.link_max;
-	multi1d<int> link_dirs=input.param.Displacement_t.link_dirs;
+	multi1d<int> link_dirs=input.param.displacement.link_dirs;
 	int num_disp=link_max*link_dirs.size()+1;
 	
 	// Noise source (eta) and Solution (psi)
