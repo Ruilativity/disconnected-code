@@ -155,8 +155,10 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 	if (paramtop.count("link_dirs") > 0){
 		read(paramtop, "link_dirs", p.link_dirs);
 		for (int idir=0 ; idir<p.link_dirs.size() ; idir++){
-			if(p.link_dirs[idir]<0 || p.link_dirs[idir]>7)
-				QDPIO::cerr << "Error! Link direction should be within range [0,7]."<< std::endl;;
+			if(p.link_dirs[idir]<0 || p.link_dirs[idir]>7){
+				QDPIO::cerr << "Error! Link direction should be within range [0,7]."<< std::endl;
+				QDP_bort(1);
+			}
 		}
 	}
 	else{
@@ -167,8 +169,10 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 	
 	if (paramtop.count("link_max") > 0){
 		read(paramtop, "link_max", p.link_max);
-		if(p.link_max<0)
+		if(p.link_max < 0){
 			QDPIO::cerr << "Error! Link length can't be negative."<< std::endl;
+			QDP_abort(1);
+		}
 	}
 	else
 		p.link_max = 1;
@@ -890,7 +894,7 @@ int main(int argc, char **argv) {
 	// Link length and directions
 	std::vector<int> link_dirs;
 	for (int i = 0; i < input.param.displacement.link_dirs.size(); ++i)
-		timeslices.push_back(input.param.displacement.link_dirs[i]);
+		link_dirs.push_back(input.param.displacement.link_dirs[i]);
 	int link_max=input.param.displacement.link_max;
 	int num_disp=link_max*link_dirs.size()+1;
 	
@@ -1082,6 +1086,7 @@ int main(int argc, char **argv) {
 				shift_psi = psi;
 				for (int d = 0; d < link_max+1; ++d) {
 					if ((dir_index!=0)&&(d==0)) continue;
+					std::cout << "calculating link "<< d << " in direction "<< link_dirs[dir_index] <<std::endl;
 					chi = shift_psi;
 					if (d!=0){
 						if (idir == 0) {
@@ -1208,6 +1213,7 @@ int main(int argc, char **argv) {
 					shift_psi = psi;
 					for (int d = 0; d < link_max+1; ++d) {
 						if ((dir_index!=0)&&(d==0)) continue;
+						std::cout << "calculating link "<< d << " in direction "<< link_dirs[dir_index] <<std::endl;
 						chi = shift_psi;
 						if (idir == 0) {
 							shift_psi = U[mu] * shift(chi, FORWARD, mu);
@@ -1257,6 +1263,7 @@ int main(int argc, char **argv) {
 					shift_psi = psi;
 					for (int d = 0; d < link_max+1; ++d) {
 						if ((dir_index!=0)&&(d==0)) continue;
+						std::cout << "calculating link "<< d << " in direction "<< link_dirs[dir_index] <<std::endl;
 						chi = shift_psi;
 						if (idir == 0) {
 							shift_psi = U[mu] * shift(chi, FORWARD, mu);
