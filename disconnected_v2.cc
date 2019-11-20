@@ -157,7 +157,7 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 		for (int idir=0 ; idir<p.link_dirs.size() ; idir++){
 			if(p.link_dirs[idir]<0 || p.link_dirs[idir]>7){
 				QDPIO::cerr << "Error! Link direction should be within range [0,7]."<< std::endl;
-				QDP_bort(1);
+				QDP_abort(1);
 			}
 		}
 	}
@@ -402,7 +402,7 @@ void check_acc(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::vector<int> &lin
 	return;
 }
 
-void link_pattern(std::vector<int> &link_patterns, int link_max){
+void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, int link_max){
 	link_patterns.push_back(0);
 	if(link_max>=1)
 		for(int j=0;j<link_dirs.size();j++)
@@ -424,7 +424,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 			  std::vector<int> &timeslices, int chkout_order, bool Restarted) {
 	int NumTs = timeslices.size();
 	std::vector<int> link_patterns;
-	link_pattern(link_patterns,link_max);
+	link_pattern(link_patterns,link_dirs,link_max);
 	int num_disp = link_patterns.size();
 	// TSM estimate of Tr [ M^{-1} \gamma ]
 	multi3d<DComplex> TrM_inv_av(num_disp, NUM_G, NumTs);
@@ -914,7 +914,7 @@ int main(int argc, char **argv) {
 		link_dirs.push_back(input.param.displacement.link_dirs[i]);
 	int link_max=input.param.displacement.link_max;
 	std::vector<int> link_patterns;
-	link_pattern(link_patterns,link_max);
+	link_pattern(link_patterns,link_dirs,link_max);
 	int num_disp=link_patterns.size();
 	
 	// Noise source (eta) and Solution (psi)
@@ -1120,7 +1120,7 @@ int main(int argc, char **argv) {
 					int mu1=(disp/10)%10;
 					int mu2=disp%10;
 					if (mu1 < 4) {
-						shift_psi = U[mu] * shift(chi, FORWARD, mu1);
+						shift_psi = U[mu1] * shift(chi, FORWARD, mu1);
 					} else {
 						shift_psi = shift(adj(U[mu1-4])*chi, BACKWARD, mu1-4);
 					}
@@ -1312,7 +1312,7 @@ int main(int argc, char **argv) {
 				for (int d=0; d<num_disp; ++d){
 					int disp=link_patterns[d];
 					chi = psi;
-					std::cout << "calculating link "<< d << " in direction "<< link_dirs[dir_index] <<std::endl;
+					std::cout << "calculating link "<< d << " in direction "<< link_patterns[d] <<std::endl;
 					if (disp==0) shift_psi=chi;
 					// link one with patter 1_mu
 					else if(disp>9 && disp < 18){
