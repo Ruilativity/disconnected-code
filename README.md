@@ -7,3 +7,8 @@ update the xml input for displacements;
 </Displacement>
 
 
+2019-11-20:
+previous version is for LaMET-type operator.
+
+update the support for second moment operator, covering all possible 2-links.
+
