@@ -1101,7 +1101,7 @@ int main(int argc, char **argv) {
 			
 			for (int d=0; d<num_disp; ++d){
 				int disp=link_patterns[d];
-				std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
+				if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
 				chi = psi;
 				if(disp==0){
 					shift_psi=chi;
@@ -1245,7 +1245,7 @@ int main(int argc, char **argv) {
 				for (int d=0; d<num_disp; ++d){
 					chi = psi;
 					int disp=link_patterns[d];
-					std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
+					if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
 					if(disp==0) shift_psi=chi;
 					// link one with patter 1_mu
 					else if(disp>9 && disp < 18){
@@ -1312,7 +1312,7 @@ int main(int argc, char **argv) {
 				for (int d=0; d<num_disp; ++d){
 					int disp=link_patterns[d];
 					chi = psi;
-					std::cout << "calculating link "<< d << " in direction "<< link_patterns[d] <<std::endl;
+					if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< link_patterns[d] <<std::endl;
 					if (disp==0) shift_psi=chi;
 					// link one with patter 1_mu
 					else if(disp>9 && disp < 18){
