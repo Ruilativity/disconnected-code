@@ -157,7 +157,7 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 		for (int idir=0 ; idir<p.link_dirs.size() ; idir++){
 			if(p.link_dirs[idir]<0 || p.link_dirs[idir]>7){
 				QDPIO::cerr << "Error! Link direction should be within range [0,7]."<< std::endl;
-				QDP_bort(1);
+				QDP_abort(1);
 			}
 		}
 	}
@@ -408,7 +408,7 @@ void check_acc(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::vector<int> &lin
 void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname, std::vector<int> &link_dirs, int link_max,
 			  std::vector<int> &timeslices, int chkout_order, bool Restarted) {
 	int NumTs = timeslices.size();
-	int num_disp = 1 + link_dirs.size()*link_max;
+	int num_disp = 1 + pow(link_dirs.size(),link_max);
 	// TSM estimate of Tr [ M^{-1} \gamma ]
 	multi3d<DComplex> TrM_inv_av(num_disp, NUM_G, NumTs);
 	
