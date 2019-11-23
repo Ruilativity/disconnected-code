@@ -12,3 +12,8 @@ previous version is for LaMET-type operator.
 
 update the support for second moment operator, covering all possible 2-links.
 
+2019-11-23:
+
+Do LaMET-type for link_max>2, do moments for link_max<3.
+
+Output link pattern are named in different ways. For moment the numbers are {length}_{dir1}_{dir2}, for LaMET the numbers are {dir}_{length}.
