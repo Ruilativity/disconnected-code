@@ -408,7 +408,7 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 		for(int j=0;j<link_dirs.size();j++)
 			for(int i=1;i<=link_max;i++)
 				link_patterns.push_back(link_dirs[j]*100+i);
-	};
+	}
 	else{
 		if(link_max>=1)
 			for(int j=0;j<link_dirs.size();j++)
