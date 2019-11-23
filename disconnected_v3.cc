@@ -1140,8 +1140,8 @@ int main(int argc, char **argv) {
 						}
 					}
 				}else{
-					mu=disp/100;
-					link_length=disp%100;
+					int mu=disp/100;
+					int link_length=disp%100;
 					if(link_length==0){
 						chi = psi;
 						shift_psi=chi;
@@ -1299,8 +1299,8 @@ int main(int argc, char **argv) {
 							}
 						}
 					}else{
-						mu=disp/100;
-						link_length=disp%100;
+						int mu=disp/100;
+						int link_length=disp%100;
 						if(link_length==0){
 							chi = psi;
 							shift_psi=chi;
@@ -1385,8 +1385,8 @@ int main(int argc, char **argv) {
 							}
 						}
 					}else{
-						mu=disp/100;
-						link_length=disp%100;
+						int mu=disp/100;
+						int link_length=disp%100;
 						if(link_length==0){
 							chi = psi;
 							shift_psi=chi;
