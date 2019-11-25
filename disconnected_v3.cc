@@ -91,6 +91,7 @@ struct Checkpoint_t {
 	int version;
 	multi1d<double> checkpoints;
 	std::string OutFileName;
+	std::string LaMETOutFileName;
 	
 	// below variables are for the program process, not for read
 	std::vector<double> cp;
@@ -175,7 +176,7 @@ void read(XMLReader& xml, const std::string& path, Displacement_t& p) {
 		}
 	}
 	else
-		p.link_max = 1;
+		p.link_max = 2;
 }
 
 void read(XMLReader& xml, const std::string& path, NoiseSource_t& p) {
@@ -236,6 +237,12 @@ void read(XMLReader& xml, const std::string& path, Checkpoint_t& p) {
 	
 	read(paramtop, "Checkpoints", p.checkpoints);
 	read(paramtop, "OutFile", p.OutFileName);
+	if(paramtop.count("LaMETOutFile") > 0){
+		read(paramtop, "LaMETOutFile", p.LaMETOutFileName);
+	} else {
+		p.LaMETOutFileName=p.OutFileName+".LaMET;
+	}
+	
 }
 
 void read(XMLReader& xml, const std::string& path, Params_t& p) {
@@ -404,35 +411,34 @@ void check_acc(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::vector<int> &lin
 
 void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, int link_max){
 	link_patterns.push_back(0);
+	if(link_max>=1)
+		for(int j=0;j<link_dirs.size();j++)
+			link_patterns.push_back(10+link_dirs[j]);
+	if(link_max>=2)
+		for(int i=0;i<link_dirs.size();i++){
+			int dir1=link_dirs[i];
+			for(int j=0;j<link_dirs.size();j++){
+				int dir2=link_dirs[j];
+				if(abs(dir1-dir2)!=4)
+					link_patterns.push_back(200+10*dir1+dir2);
+			}
+		}
 	if(link_max>3){
 		for(int j=0;j<link_dirs.size();j++)
 			for(int i=1;i<=link_max;i++)
 				link_patterns.push_back(link_dirs[j]*100+i);
 	}
-	else{
-		if(link_max>=1)
-			for(int j=0;j<link_dirs.size();j++)
-				link_patterns.push_back(10+link_dirs[j]);
-		if(link_max==2)
-			for(int i=0;i<link_dirs.size();i++){
-				int dir1=link_dirs[i];
-				for(int j=0;j<link_dirs.size();j++){
-					int dir2=link_dirs[j];
-					if(abs(dir1-dir2)!=4)
-						link_patterns.push_back(200+10*dir1+dir2);
-				}
-			}
-	}
 }
 //====================================================================
 // Calculate statistical error, and save results
 //====================================================================
-void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname, std::vector<int> &link_dirs, int link_max,
+void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname, std::string lamet_out_fname, std::vector<int> &link_dirs, int link_max,
 			  std::vector<int> &timeslices, int chkout_order, bool Restarted) {
 	int NumTs = timeslices.size();
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int num_disp = link_patterns.size();
+	int num_disp_mom= pow(link_dirs.size(),2)+1;
 	// TSM estimate of Tr [ M^{-1} \gamma ]
 	multi3d<DComplex> TrM_inv_av(num_disp, NUM_G, NumTs);
 	
@@ -640,16 +646,21 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	// Save results
 	//-----------------------------
 	char buffer[250];
+	char buffer_LaMET[250];
 	if (chkout_order == -1)  // -1 means that this checkout is the final
 		sprintf(buffer, "%s_fn", out_fname.c_str());
+		sprintf(buffer_LaMET, "%s_fn", lamet_out_fname.c_str());
 	else
 		sprintf(buffer, "%s_%02d", out_fname.c_str(), chkout_order);
+		sprintf(buffer_LaMET, "%s_%02d", lamet_out_fname.c_str(), chkout_order);
 	
 	std::string out_fname_c(buffer);
+	std::string lamet_out_fname_c(buffer_LaMET);
 	
+	//write moment into file
 	TextFileWriter fout(out_fname_c);
 	
-	for (int d = 0; d < num_disp; ++d) {
+	for (int d = 0; d < num_disp_mom; ++d) {
 		
 		for (int t = 0; t < NumTs; ++t) {
 			
@@ -691,6 +702,51 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	}  // for disp
 	
 	fout.close();
+	// write LaMET type operators into a separate file
+	TextFileWriter fout(lamet_out_fname_c);
+		
+		for (int d = num_disp_mom; d < num_disp; ++d) {
+			
+			for (int t = 0; t < NumTs; ++t) {
+				
+	#ifdef CALC_ERR_ERR
+				fout << "# d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
+				
+				for (int g=0; g<NUM_G; ++g) {
+					char buffer[250];
+					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
+							link_patterns[d],
+							timeslices[t],
+							g,
+							TrM_inv_av[d][g][t].elem().elem().elem().real(),
+							TrM_inv_av[d][g][t].elem().elem().elem().imag(),
+							TrM_inv_err_r[d][g][t],
+							TrM_inv_err_i[d][g][t],
+							TrM_inv_est_err_err_r[d][g][t],
+							TrM_inv_est_err_err_i[d][g][t]);
+					std::string oline(buffer);
+					fout << oline;
+				}  // for (int g=0; g<NUM_G; ++g)
+	#else
+				fout << "#d  t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
+				<< "\n";
+				
+				for (int g = 0; g < NUM_G; ++g) {
+					char buffer[250];
+					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
+							link_patterns[d] , timeslices[t], g,
+							TrM_inv_av[d][g][t].elem().elem().elem().real(),
+							TrM_inv_av[d][g][t].elem().elem().elem().imag(),
+							TrM_inv_err_r[d][g][t], TrM_inv_err_i[d][g][t]);
+					std::string oline(buffer);
+					fout << oline;
+				}  // for (int g=0; g<NUM_G; ++g)
+	#endif
+				
+			}  // for (int t=0; t<NumTs; ++t)
+		}  // for disp
+		
+		fout.close();
 	
 	//-----------------------------
 	// Save number of iterations
@@ -923,6 +979,7 @@ int main(int argc, char **argv) {
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int num_disp=link_patterns.size();
+	int num_disp_mom=pow(link_dirs.size(),2)+1;
 	
 	// Noise source (eta) and Solution (psi)
 	LatticeFermion eta, psi;
@@ -1109,7 +1166,7 @@ int main(int argc, char **argv) {
 			for (int d=0; d<num_disp; ++d){
 				int disp=link_patterns[d];
 				if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
-				if(link_max<3){
+				if(d<num_disp_mom){
 					chi = psi;
 					if(disp==0){
 						shift_psi=chi;
@@ -1139,22 +1196,18 @@ int main(int argc, char **argv) {
 							shift_psi = shift(adj(U[mu2-4])*chi, BACKWARD, mu2-4);
 						}
 					}
-				}else{
+				}else if(link_max>2){
 					int mu=disp/100;
 					int link_length=disp%100;
-					if(link_length==0){
-						chi = psi;
-						shift_psi=chi;
+					
+					if(link_length ==1) chi=psi;
+					else chi=shift_psi;
+					if (mu < 4) {
+						shift_psi = U[mu] * shift(chi, FORWARD, mu);
+					} else {
+						shift_psi = shift(adj(U[mu-4])*chi, BACKWARD, mu-4);
 					}
-					else{
-						if(link_length ==1) chi=psi;
-						else chi=shift_psi;
-						if (mu < 4) {
-							shift_psi = U[mu] * shift(chi, FORWARD, mu);
-						} else {
-							shift_psi = shift(adj(U[mu-4])*chi, BACKWARD, mu-4);
-						}
-					}
+				
 				}
 				for (int g = 0; g < NUM_G; ++g) {
 					corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
@@ -1270,7 +1323,7 @@ int main(int argc, char **argv) {
 				for (int d=0; d<num_disp; ++d){
 					int disp=link_patterns[d];
 					if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
-					if(link_max<3){
+					if(d<num_disp_mom){
 						chi = psi;
 						if(disp==0) shift_psi=chi;
 						// link one with patter 1_mu
@@ -1298,21 +1351,15 @@ int main(int argc, char **argv) {
 								shift_psi = shift(adj(U[mu2-4])*chi, BACKWARD, mu2-4);
 							}
 						}
-					}else{
+					}else if(link_max>2){
 						int mu=disp/100;
 						int link_length=disp%100;
-						if(link_length==0){
-							chi = psi;
-							shift_psi=chi;
-						}
-						else{
-							if(link_length ==1) chi=psi;
-							else chi=shift_psi;
-							if (mu < 4) {
-								shift_psi = U[mu] * shift(chi, FORWARD, mu);
-							} else {
-								shift_psi = shift(adj(U[mu-4])*chi, BACKWARD, mu-4);
-							}
+						if(link_length ==1) chi=psi;
+						else chi=shift_psi;
+						if (mu < 4) {
+							shift_psi = U[mu] * shift(chi, FORWARD, mu);
+						} else {
+							shift_psi = shift(adj(U[mu-4])*chi, BACKWARD, mu-4);
 						}
 					}
 					
@@ -1356,7 +1403,7 @@ int main(int argc, char **argv) {
 					int disp=link_patterns[d];
 					
 					if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< link_patterns[d] <<std::endl;
-					if(link_max<3){
+					if(d<num_disp_mom){
 						chi = psi;
 						if (disp==0) shift_psi=chi;
 						// link one with patter 1_mu
@@ -1384,21 +1431,15 @@ int main(int argc, char **argv) {
 								shift_psi = shift(adj(U[mu2-4])*chi, BACKWARD, mu2-4);
 							}
 						}
-					}else{
+					}else if(link_max>2){
 						int mu=disp/100;
 						int link_length=disp%100;
-						if(link_length==0){
-							chi = psi;
-							shift_psi=chi;
-						}
-						else{
-							if(link_length ==1) chi=psi;
-							else chi=shift_psi;
-							if (mu < 4) {
-								shift_psi = U[mu] * shift(chi, FORWARD, mu);
-							} else {
-								shift_psi = shift(adj(U[mu-4])*chi, BACKWARD, mu-4);
-							}
+						if(link_length ==1) chi=psi;
+						else chi=shift_psi;
+						if (mu < 4) {
+							shift_psi = U[mu] * shift(chi, FORWARD, mu);
+						} else {
+							shift_psi = shift(adj(U[mu-4])*chi, BACKWARD, mu-4);
 						}
 					}
 					
@@ -1531,7 +1572,7 @@ int main(int argc, char **argv) {
 						
 						if (chkout) {
 							// checkout
-							checkout(count_lp, count_hp, errAnly, checkp[idx_cp].OutFileName,link_dirs,link_max,
+							checkout(count_lp, count_hp, errAnly, checkp[idx_cp].OutFileName,checkp[idx_cp].LaMETOutFileName,link_dirs,link_max,
 									 timeslices, checkp[idx_cp].chkout_order, Restarted);
 							checkp[idx_cp].chkout_order++;
 							
