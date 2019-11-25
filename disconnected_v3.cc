@@ -240,7 +240,7 @@ void read(XMLReader& xml, const std::string& path, Checkpoint_t& p) {
 	if(paramtop.count("LaMETOutFile") > 0){
 		read(paramtop, "LaMETOutFile", p.LaMETOutFileName);
 	} else {
-		p.LaMETOutFileName=p.OutFileName+".LaMET;
+		p.LaMETOutFileName=p.OutFileName+".LaMET";
 	}
 	
 }
@@ -647,12 +647,13 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	//-----------------------------
 	char buffer[250];
 	char buffer_LaMET[250];
-	if (chkout_order == -1)  // -1 means that this checkout is the final
+	if (chkout_order == -1){  // -1 means that this checkout is the final
 		sprintf(buffer, "%s_fn", out_fname.c_str());
 		sprintf(buffer_LaMET, "%s_fn", lamet_out_fname.c_str());
-	else
+	} else{
 		sprintf(buffer, "%s_%02d", out_fname.c_str(), chkout_order);
 		sprintf(buffer_LaMET, "%s_%02d", lamet_out_fname.c_str(), chkout_order);
+	}
 	
 	std::string out_fname_c(buffer);
 	std::string lamet_out_fname_c(buffer_LaMET);
@@ -703,10 +704,10 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	
 	fout.close();
 	// write LaMET type operators into a separate file
-	TextFileWriter fout(lamet_out_fname_c);
+	TextFileWriter fout_lamet(lamet_out_fname_c);
 		
-		for (int d = num_disp_mom; d < num_disp; ++d) {
-			
+		for (int d = 0; d < num_disp; ++d) {
+			if(d<num_disp_mom) continue;
 			for (int t = 0; t < NumTs; ++t) {
 				
 	#ifdef CALC_ERR_ERR
@@ -725,10 +726,10 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 							TrM_inv_est_err_err_r[d][g][t],
 							TrM_inv_est_err_err_i[d][g][t]);
 					std::string oline(buffer);
-					fout << oline;
+					fout_lamet << oline;
 				}  // for (int g=0; g<NUM_G; ++g)
 	#else
-				fout << "#d  t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
+				fout_lamet << "#d  t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
 				<< "\n";
 				
 				for (int g = 0; g < NUM_G; ++g) {
@@ -739,14 +740,14 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 							TrM_inv_av[d][g][t].elem().elem().elem().imag(),
 							TrM_inv_err_r[d][g][t], TrM_inv_err_i[d][g][t]);
 					std::string oline(buffer);
-					fout << oline;
+					fout_lamet << oline;
 				}  // for (int g=0; g<NUM_G; ++g)
 	#endif
 				
 			}  // for (int t=0; t<NumTs; ++t)
 		}  // for disp
 		
-		fout.close();
+		fout_lamet.close();
 	
 	//-----------------------------
 	// Save number of iterations
