@@ -707,7 +707,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	TextFileWriter fout_lamet(lamet_out_fname_c);
 		
 		for (int d = 0; d < num_disp; ++d) {
-			if(d<num_disp_mom) continue;
+			if(d>0 && d<num_disp_mom) continue;
 			for (int t = 0; t < NumTs; ++t) {
 				
 	#ifdef CALC_ERR_ERR
