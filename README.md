@@ -23,3 +23,5 @@ Output link pattern are named in different ways. For moment the numbers are {len
 
 Do first and second moments for all cases, do LaMET for link_max>2, save to different files.
 
+2019-12-02:
+Rearrange the link patterns so that no repeated shifts are made for moment operators. Saved 56 shifts.
