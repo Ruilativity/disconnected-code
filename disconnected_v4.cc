@@ -814,7 +814,7 @@ void do_HPE(Real kappa, LatticeFermion &psi,
 // separate shifts on each direction.
 //====================================================================
 
-void shift_link(int d, LatticeFermion &chi,LatticeFermion &psi, LatticeFermion &shift_psi, int num_disp_mom, int num_disp, int disp){
+void shift_link(int d, LatticeFermion &chi,LatticeFermion &psi, LatticeFermion &shift_psi, int num_disp_mom, int num_disp, int disp, multi1d<LatticeColorMatrix> U){
 	if(d<num_disp_mom){
 		if(disp==0){
 			chi = psi;
@@ -1209,7 +1209,7 @@ int main(int argc, char **argv) {
 				int disp=link_patterns[d];
 				if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
 				
-				shift_link(d,chi,psi,shift_psi,num_disp_mom,num_disp,disp);
+				shift_link(d,chi,psi,shift_psi,num_disp_mom,num_disp,disp,U);
 				
 
 //				if(d<num_disp_mom){
@@ -1369,7 +1369,7 @@ int main(int argc, char **argv) {
 				for (int d=0; d<num_disp; ++d){
 					int disp=link_patterns[d];
 					if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
-					shift_link(d,chi,psi,shift_psi,num_disp_mom,num_disp,disp);
+					shift_link(d,chi,psi,shift_psi,num_disp_mom,num_disp,disp,U);
 					
 //					if(d<num_disp_mom){
 //						chi = psi;
@@ -1452,7 +1452,7 @@ int main(int argc, char **argv) {
 					
 					if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< link_patterns[d] <<std::endl;
 					
-					shift_link(d,chi,psi,shift_psi,num_disp_mom,num_disp,disp);
+					shift_link(d,chi,psi,shift_psi,num_disp_mom,num_disp,disp,U);
 					
 //					if(d<num_disp_mom){
 //						chi = psi;
