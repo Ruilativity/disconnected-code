@@ -15,6 +15,7 @@
 // 1/sqrt(2)
 #define INV_SQRT2 0.70710678118654752440
 
+
 // Number of gamma operators (Ns * Ns = 16)
 #define NUM_G     16
 
@@ -414,7 +415,7 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 	if(link_max==1)
 		for(int j=0;j<link_dirs.size();j++)
 			link_patterns.push_back(10+link_dirs[j]);
-	if(link_max>=2)
+	if(link_max==2)
 		for(int i=0;i<link_dirs.size();i++){
 			int dir1=link_dirs[i];
 			link_patterns.push_back(10+dir1);
@@ -425,6 +426,13 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 			}
 		}
 	if(link_max>3){
+		for(int i=0;i<8;i++){
+			link_patterns.push_back(10+i);
+			for(int j=0;j<8;j++){
+				if(abs(i-j)!=4)
+					link_patterns.push_back(200+10*i+j);
+			}
+		}
 		for(int j=0;j<link_dirs.size();j++)
 			for(int i=1;i<=link_max;i++)
 				link_patterns.push_back(link_dirs[j]*100+i);
@@ -439,7 +447,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int num_disp = link_patterns.size();
-	int num_disp_mom= pow(link_dirs.size(),2)+1;
+	int num_disp_mom= pow(8,2)+1;
 	// TSM estimate of Tr [ M^{-1} \gamma ]
 	multi3d<DComplex> TrM_inv_av(num_disp, NUM_G, NumTs);
 	
@@ -524,27 +532,27 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	
 	QDPIO::cout << std::endl;
 	
-	for (int d = 0; d < num_disp; ++d) {
-		QDPIO::cout << "Displacement = " << link_patterns[d] << std::endl;
-		for (int t = 0; t < NumTs; ++t) {
-			QDPIO::cout << "Timeslice = " << timeslices[t] << std::endl;
-			
-			for (int g = 0; g < NUM_G; ++g)
-				QDPIO::cout << "Tr [ M^{-1} g" << g << " ]_LP = "
-				<< TrM_inv_av_LP[d][g][t] << " err( " << TrM_inv_LP_err_r[d][g][t]
-				<< ", " << TrM_inv_LP_err_i[d][g][t] << " )" << std::endl;
-			
-			QDPIO::cout << std::endl;
-			
-			for (int g = 0; g < NUM_G; ++g)
-				QDPIO::cout << "Tr [ M^{-1} g" << g << " ]_Cr = "
-				<< TrM_inv_av_C[d][g][t] << " err( " << TrM_inv_C_err_r[d][g][t] << ", "
-				<< TrM_inv_C_err_i[d][g][t] << " )" << std::endl;
-			
-			QDPIO::cout << std::endl;
-			QDPIO::cout << std::endl;
-		}  //for (int t=0; t<NumTs; ++t)
-	}  // for disp
+//	for (int d = 0; d < num_disp; ++d) {
+//		QDPIO::cout << "Displacement = " << link_patterns[d] << std::endl;
+//		for (int t = 0; t < NumTs; ++t) {
+//			QDPIO::cout << "Timeslice = " << timeslices[t] << std::endl;
+//
+//			for (int g = 0; g < NUM_G; ++g)
+//				QDPIO::cout << "Tr [ M^{-1} g" << g << " ]_LP = "
+//				<< TrM_inv_av_LP[d][g][t] << " err( " << TrM_inv_LP_err_r[d][g][t]
+//				<< ", " << TrM_inv_LP_err_i[d][g][t] << " )" << std::endl;
+//
+//			QDPIO::cout << std::endl;
+//
+//			for (int g = 0; g < NUM_G; ++g)
+//				QDPIO::cout << "Tr [ M^{-1} g" << g << " ]_Cr = "
+//				<< TrM_inv_av_C[d][g][t] << " err( " << TrM_inv_C_err_r[d][g][t] << ", "
+//				<< TrM_inv_C_err_i[d][g][t] << " )" << std::endl;
+//
+//			QDPIO::cout << std::endl;
+//			QDPIO::cout << std::endl;
+//		}  //for (int t=0; t<NumTs; ++t)
+//	}  // for disp
 	
 	//--------------------------------------------------------------------
 	// Calculate TSM estimate of TrM_inv
@@ -619,44 +627,48 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	//-----------------------------
 	// Print results
 	//-----------------------------
-	for (int d = 0; d < num_disp; ++d) {
-		QDPIO::cout << "Displacement = " << link_patterns[d] << std::endl;
-		for (int t = 0; t < NumTs; ++t) {
-			QDPIO::cout << "Timeslice = " << timeslices[t] << std::endl;
-			
-			for (int g = 0; g < NUM_G; ++g)
-				QDPIO::cout << "Tr [ M^{-1} g" << g << " ]    = " << TrM_inv_av[d][g][t]
-				<< " std( " << TrM_inv_err_r[d][g][t] << ", "
-				<< TrM_inv_err_i[d][g][t] << " )" << std::endl;
-			
-#ifdef CALC_ERR_ERR
-			for (int g=0; g<NUM_G; ++g)
-				QDPIO::cout << "Tr [ M^{-1} g" << g << " ]_est= ( "
-				<< TrM_inv_est_av_r[d][g][t] << ", "
-				<< TrM_inv_est_av_i[d][g][t] << " ) "
-				<< " ( " << TrM_inv_est_err_r[d][g][t] << ", "
-				<< TrM_inv_est_err_i[d][g][t] << " )"
-				<< " ( " << TrM_inv_est_err_err_r[d][g][t] << ", "
-				<< TrM_inv_est_err_err_i[d][g][t] << " )" << std::endl;
-#endif
-			QDPIO::cout << std::endl;
-		}  //for (int t=0; t<NumTs; ++t)
-	} // for disp
+//	for (int d = 0; d < num_disp; ++d) {
+//		QDPIO::cout << "Displacement = " << link_patterns[d] << std::endl;
+//		for (int t = 0; t < NumTs; ++t) {
+//			QDPIO::cout << "Timeslice = " << timeslices[t] << std::endl;
+//
+//			for (int g = 0; g < NUM_G; ++g)
+//				QDPIO::cout << "Tr [ M^{-1} g" << g << " ]    = " << TrM_inv_av[d][g][t]
+//				<< " std( " << TrM_inv_err_r[d][g][t] << ", "
+//				<< TrM_inv_err_i[d][g][t] << " )" << std::endl;
+//
+//#ifdef CALC_ERR_ERR
+//			for (int g=0; g<NUM_G; ++g)
+//				QDPIO::cout << "Tr [ M^{-1} g" << g << " ]_est= ( "
+//				<< TrM_inv_est_av_r[d][g][t] << ", "
+//				<< TrM_inv_est_av_i[d][g][t] << " ) "
+//				<< " ( " << TrM_inv_est_err_r[d][g][t] << ", "
+//				<< TrM_inv_est_err_i[d][g][t] << " )"
+//				<< " ( " << TrM_inv_est_err_err_r[d][g][t] << ", "
+//				<< TrM_inv_est_err_err_i[d][g][t] << " )" << std::endl;
+//#endif
+//			QDPIO::cout << std::endl;
+//		}  //for (int t=0; t<NumTs; ++t)
+//	} // for disp
 	
 	//-----------------------------
 	// Save results
 	//-----------------------------
 	char buffer[250];
 	char buffer_LaMET[250];
+	char buffer_cr[250];
 	if (chkout_order == -1){  // -1 means that this checkout is the final
 		sprintf(buffer, "%s_fn", out_fname.c_str());
+		sprintf(buffer_cr, "%s_cr_fn", out_fname.c_str());
 		sprintf(buffer_LaMET, "%s_fn", lamet_out_fname.c_str());
 	} else{
 		sprintf(buffer, "%s_%02d", out_fname.c_str(), chkout_order);
+		sprintf(buffer_cr, "%s_cr_%02d", out_fname.c_str(), chkout_order);
 		sprintf(buffer_LaMET, "%s_%02d", lamet_out_fname.c_str(), chkout_order);
 	}
 	
 	std::string out_fname_c(buffer);
+	std::string out_fname_cr_c(buffer_cr);
 	std::string lamet_out_fname_c(buffer_LaMET);
 	
 	//write moment into file
@@ -704,6 +716,42 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	}  // for disp
 	
 	fout.close();
+	
+	// write the LP and Correction into separate files.
+		TextFileWriter fout_cr(out_fname_cr_c);
+		
+		for (int d = 0; d < num_disp_mom; ++d) {
+			
+			for (int t = 0; t < NumTs; ++t) {
+				
+	
+				fout << "# d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
+				
+				for (int g=0; g<NUM_G; ++g) {
+					char buffer[250];
+					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
+							link_patterns[d],
+							timeslices[t],
+							g,
+							TrM_inv_av_LP[d][g][t].elem().elem().elem().real(),
+							TrM_inv_av_LP[d][g][t].elem().elem().elem().imag(),
+							TrM_inv_LP_err_r[d][g][t],
+							TrM_inv_LP_err_i[d][g][t],
+							TrM_inv_av_C[d][g][t].elem().elem().elem().real(),
+							TrM_inv_av_C[d][g][t].elem().elem().elem().imag(),
+							TrM_inv_C_err_r[d][g][t],
+							TrM_inv_C_err_i[d][g][t]);
+					std::string oline(buffer);
+					fout << oline;
+				}  // for (int g=0; g<NUM_G; ++g)
+	
+				
+			}  // for (int t=0; t<NumTs; ++t)
+		}  // for disp
+		
+		fout_cr.close();
+		
+		
 	// write LaMET type operators into a separate file
 	TextFileWriter fout_lamet(lamet_out_fname_c);
 		
