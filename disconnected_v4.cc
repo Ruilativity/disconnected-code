@@ -425,7 +425,7 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 					link_patterns.push_back(200+10*dir1+dir2);
 			}
 		}
-	if(link_max>3){
+	if(link_max>=3){
 		for(int i=0;i<8;i++){
 			link_patterns.push_back(10+i);
 			for(int j=0;j<8;j++){
