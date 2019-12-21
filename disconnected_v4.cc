@@ -725,7 +725,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 			for (int t = 0; t < NumTs; ++t) {
 				
 	
-				fout << "# d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
+				fout << "# d t   g  Tr[M^-1 g_i]_LP_re  Tr[M^-1 g_i]_LP_im   StatErr_re      StatErr_im       Correction_re      Correction_im	Correction_Err_re	Correction_Err_im" << "\n";
 				
 				for (int g=0; g<NUM_G; ++g) {
 					char buffer[250];
@@ -742,7 +742,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 							TrM_inv_C_err_r[d][g][t],
 							TrM_inv_C_err_i[d][g][t]);
 					std::string oline(buffer);
-					fout << oline;
+					fout_cr << oline;
 				}  // for (int g=0; g<NUM_G; ++g)
 	
 				
