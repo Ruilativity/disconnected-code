@@ -447,7 +447,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int num_disp = link_patterns.size();
-	int num_disp_mom= pow(8,2)+1;
+	int num_disp_mom;
+	if(link_max>2) num_disp_mom= pow(8,2)+1;
+	else num_disp_mom= pow(link_dirs.size(),link_max)+1;
 	// TSM estimate of Tr [ M^{-1} \gamma ]
 	multi3d<DComplex> TrM_inv_av(num_disp, NUM_G, NumTs);
 	
@@ -1069,7 +1071,10 @@ int main(int argc, char **argv) {
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int num_disp=link_patterns.size();
-	int num_disp_mom=pow(8,2)+1;
+	
+	int num_disp_mom;
+	if(link_max>2) num_disp_mom= pow(8,2)+1;
+	else num_disp_mom= pow(link_dirs.size(),link_max)+1;
 	
 	// Noise source (eta) and Solution (psi)
 	LatticeFermion eta, psi;
