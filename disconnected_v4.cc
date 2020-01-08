@@ -1069,7 +1069,7 @@ int main(int argc, char **argv) {
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int num_disp=link_patterns.size();
-	int num_disp_mom=pow(link_dirs.size(),2)+1;
+	int num_disp_mom=pow(8,2)+1;
 	
 	// Noise source (eta) and Solution (psi)
 	LatticeFermion eta, psi;
