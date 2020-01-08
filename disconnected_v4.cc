@@ -755,7 +755,8 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		
 		
 	// write LaMET type operators into a separate file
-	TextFileWriter fout_lamet(lamet_out_fname_c);
+	if(link_max>2){
+		TextFileWriter fout_lamet(lamet_out_fname_c);
 		
 		for (int d = 0; d < num_disp; ++d) {
 			if(d>0 && d<num_disp_mom) continue;
@@ -799,6 +800,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		}  // for disp
 		
 		fout_lamet.close();
+	}
 	
 	//-----------------------------
 	// Save number of iterations
