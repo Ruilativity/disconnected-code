@@ -1,22 +1,22 @@
-CHROMA=/work/06332/zhangrui/stampede2/bin/chroma-double_s4/bin/
+CHROMA=${HOME}/bin/pdfchroma/bin/
 CONFIG=$(CHROMA)chroma-config
 CXX=$(shell $(CONFIG) --cxx)
-CXXFLAGS=$(shell $(CONFIG) --cxxflags) -I. -g
-LDFLAGS=-L/work/06332/zhangrui/stampede2/bin/chroma-double_s4/lib $(shell $(CONFIG) --ldflags) -g
-LIBS=$(shell $(CONFIG) --libs) 
+CXXFLAGS=$(shell $(CONFIG) --cxxflags) -I. -I${HOME}/bin/qopqdp/include -g 
+LDFLAGS=-L${HOME}/bin/pdfchroma/lib $(shell $(CONFIG) --ldflags) -L${HOME}/bin/qopqdp/lib -g
+LIBS=$(shell $(CONFIG) --libs)   -lwilsonmg -lqopqdp
 
-GSL=/opt/apps/gcc7_1/gsl/2.3/bin/
+GSL=/global/common/sw/cray/cnl7/haswell/gsl/2.5/gcc/8.2.0/sr445ay/bin/
 GSL_CONFIG=$(GSL)gsl-config
 GSL_CFLAGS=$(shell $(GSL_CONFIG) --cflags) 
 GSL_LIBS=$(shell $(GSL_CONFIG) --libs)
 
-QLA=/work/06332/zhangrui/stampede2/bin/qla/bin/
+QLA=${HOME}/bin/qla/bin/
 QLA_CONFIG=$(QLA)qla-config
 QLA_CFLAGS=$(shell $(QLA_CONFIG) --cflags) 
 QLA_LIBS=$(shell $(QLA_CONFIG) --libs)
 QLA_LDFLAGS=$(shell $(QLA_CONFIG) --ldflags)
 
-QDPC=/work/06332/zhangrui/stampede2/bin/qdp/bin/
+QDPC=${HOME}/bin/qdp/bin/
 QDPC_CONFIG=$(QDPC)qdp-config
 QDPC_CFLAGS=$(shell $(QDPC_CONFIG) --cflags) 
 QDPC_LIBS=$(shell $(QDPC_CONFIG) --libs)
