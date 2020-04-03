@@ -104,7 +104,7 @@ struct Params_t {
 	Inverter_t inverter;
 	NoiseSource_t noise_src;
 	Displacement_t displacement;
-	int q2_max;
+	int mom_max;
 	multi1d<Checkpoint_t> checkpoint;
 	bool use_HPE;
 };
@@ -251,10 +251,10 @@ void read(XMLReader& xml, const std::string& path, Params_t& p) {
 	XMLReader paramtop(xml, path);
 	read(paramtop, "nrow", p.nrow);
 	
-	if (paramtop.count("q2_max") > 0)
-		read(paramtop, "q2_max", p.q2_max);
+	if (paramtop.count("mom2_max") > 0)
+		read(paramtop, "mom2_max", p.mom2_max);
 	else {
-		p.q2_max=0;
+		p.mom2_max=0;
 	}
 	
 	if (paramtop.count("UseHPE") > 0)
