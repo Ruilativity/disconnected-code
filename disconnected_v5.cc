@@ -104,7 +104,7 @@ struct Params_t {
 	Inverter_t inverter;
 	NoiseSource_t noise_src;
 	Displacement_t displacement;
-	int mom_max;
+	int mom2_max;
 	multi1d<Checkpoint_t> checkpoint;
 	bool use_HPE;
 };
