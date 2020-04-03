@@ -1498,7 +1498,7 @@ int main(int argc, char **argv) {
 						count_hp = 0;
 						HP_inv_called = false;
 						Restarted = true;
-						errAnly = ErrAnlyVars(NumDisp,NumTs);
+						errAnly = ErrAnlyVars(NumDisp,NumMom,NumTs);
 						PP_LP = S_f_LP->qprop(stateLP, input.param.noise_src.invParamLP_r);
 						// Note that checkout order is not reinitialized; it will be proceed from where it is
 					}  // if (ratio_C_LP_err > restart_factor)
