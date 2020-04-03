@@ -299,15 +299,15 @@ bool linkageHack(void) {
 // Structures for error analysis
 //====================================================================
 struct ErrAnlyVars {
-	multi3d<DComplex> TrM_inv_sum_LP;
-	multi3d<DComplex> TrM_inv_sum_C;
-	multi3d<double> TrM_inv_LP_sqsum_r;
-	multi3d<double> TrM_inv_LP_sqsum_i;
-	multi3d<double> TrM_inv_C_sqsum_r;
-	multi3d<double> TrM_inv_C_sqsum_i;
+	multi4d<DComplex> TrM_inv_sum_LP;
+	multi4d<DComplex> TrM_inv_sum_C;
+	multi4d<double> TrM_inv_LP_sqsum_r;
+	multi4d<double> TrM_inv_LP_sqsum_i;
+	multi4d<double> TrM_inv_C_sqsum_r;
+	multi4d<double> TrM_inv_C_sqsum_i;
 	
 #ifdef CALC_ERR_ERR
-	multi3d<std::vector<DComplex>> TrM_inv_est;
+	multi4d<std::vector<DComplex>> TrM_inv_est;
 #endif
 	
 	ErrAnlyVars() {
@@ -474,11 +474,11 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	
 	
 	// TSM estimate of Tr [ M^{-1} \gamma ]
-	multi3d<DComplex> TrM_inv_av(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<DComplex> TrM_inv_av(NumDisp, NumMom, NUM_G, NumTs);
 	
 	// Low precision estimate and correction to Tr [ G^{-1} \Gamma ]
-	multi3d<DComplex> TrM_inv_av_LP(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<DComplex> TrM_inv_av_C(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<DComplex> TrM_inv_av_LP(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<DComplex> TrM_inv_av_C(NumDisp, NumMom, NUM_G, NumTs);
 	
 	// Calculate average
 	if (Nr_LP != 0) for (int d = 0; d < NumDisp; ++d)
@@ -496,12 +496,12 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	//-----------------------------
 	// Calculate statistical error
 	//-----------------------------
-	multi3d<double> TrM_inv_LP_err_r(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_LP_err_i(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_C_err_r(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_C_err_i(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_err_r(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_err_i(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_LP_err_r(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_LP_err_i(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_C_err_r(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_C_err_i(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_err_r(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_err_i(NumDisp, NumMom, NUM_G, NumTs);
 	
 	for (int d = 0; d < NumDisp; ++d)
 		for (int p = 0; p < NumMom; ++p)
@@ -575,12 +575,12 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	// Calculate Another estimate of total error and error of error
 	//--------------------------------------------------------------------
 #ifdef CALC_ERR_ERR
-	multi3d<double> TrM_inv_est_av_r(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_est_av_i(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_est_err_r(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_est_err_i(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_est_err_err_r(NumDisp, NumMom, NUM_G, NumTs);
-	multi3d<double> TrM_inv_est_err_err_i(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_est_av_r(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_est_av_i(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_est_err_r(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_est_err_i(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_est_err_err_r(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<double> TrM_inv_est_err_err_i(NumDisp, NumMom, NUM_G, NumTs);
 	
 	for (int d = 0; d < NumDisp; ++d)
 		for (int p = 0; p < NumMom; ++p)
@@ -1077,7 +1077,7 @@ int main(int argc, char **argv) {
 	Complex TrM_inv;
 	LatticeFermion chi, shift_psi;
 #ifdef CALC_ERR_ERR
-	multi3d<DComplex> TrM_inv_est_LP_sum(NumDisp, NumMom, NUM_G, NumTs);
+	multi4d<DComplex> TrM_inv_est_LP_sum(NumDisp, NumMom, NUM_G, NumTs);
 	for (int d=0; d < NumDisp; ++d)
 		for (int p=0; p < NumDisp; ++p)
 		for (int g=0; g < NUM_G; ++g)
@@ -1280,7 +1280,7 @@ int main(int argc, char **argv) {
 #ifdef CALC_ERR_ERR
 						TrM_inv_est_LP_sum[d][p][g][t] += TrM_inv;
 #endif
-					}//multi3d<DComplex> TrM_inv_C_HP(NumDisp, NumMom, NUM_G, NumTs);
+					}//multi4d<DComplex> TrM_inv_C_HP(NumDisp, NumMom, NUM_G, NumTs);
 					}//for (int p = 0; p < NumMom; ++p)
 				}//for (int g = 0; g < NUM_G; ++g)
 			}//for (int d=0; d<NumDisp; ++d)
@@ -1309,8 +1309,8 @@ int main(int argc, char **argv) {
 				<< std::endl;
 				
 				// Temp variables
-				multi3d<DComplex> TrM_inv_C_HP(NumDisp, NumMom, NUM_G, NumTs);
-				multi3d<DComplex> TrM_inv_C_LP(NumDisp, NumMom, NUM_G, NumTs);
+				multi4d<DComplex> TrM_inv_C_HP(NumDisp, NumMom, NUM_G, NumTs);
+				multi4d<DComplex> TrM_inv_C_LP(NumDisp, NumMom, NUM_G, NumTs);
 				for (int d = 0; d < NumDisp; ++d)
 					for (int p=0; d<NumMom; ++p)
 					for (int g = 0; g < NUM_G; ++g)
