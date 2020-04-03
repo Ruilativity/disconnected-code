@@ -1066,27 +1066,27 @@ int main(int argc, char **argv) {
 	if(link_max>2) NumDisp_mom= pow(8,2)+1;
 	else NumDisp_mom= pow(link_dirs.size(),link_max)+1;
 	SftMom phases(input.param.mom2_max, false, Nd-1);
-	int NumMom=phases.NumMom();
+	int NumMom=phases.numMom();
 	
 	// Noise source (eta) and Solution (psi)
 	LatticeFermion eta, psi;
 	
 	// Variables for error analysis
-	ErrAnlyVars errAnly(NumDisp,NumTs);
+	ErrAnlyVars errAnly(NumDisp,NumMom,NumTs);
 	// Temp variables
 	Complex TrM_inv;
 	LatticeFermion chi, shift_psi;
 #ifdef CALC_ERR_ERR
 	multi4d<DComplex> TrM_inv_est_LP_sum(NumDisp, NumMom, NUM_G, NumTs);
 	for (int d=0; d < NumDisp; ++d)
-		for (int p=0; p < NumDisp; ++p)
+		for (int p=0; p < NumMom; ++p)
 		for (int g=0; g < NUM_G; ++g)
 			for (int t=0; t < NumTs; ++t)
 				TrM_inv_est_LP_sum[d][p][g][t] = zero;
 #endif
 	
 	LatticeComplex corr_fn;
-	multi1d<DComplex> corr_fn_t(Layout::lattSize()[Nd - 1]);
+	multi2d<DComplex> corr_fn_t(NumMom,Layout::lattSize()[Nd - 1]);
 	
 	LatticeBoolean mask = false;
 	
@@ -1484,7 +1484,7 @@ int main(int argc, char **argv) {
 				if (count_lp == restart_NrLP && !Restarted) {
 					double ratio_C_LP_err, s_err_max, s_err_av;
 					check_acc(count_lp, count_hp, errAnly, link_dirs, link_max, timeslices, ratio_C_LP_err,
-							  s_err_max, s_err_av);
+							  s_err_max, s_err_av,phases);
 					
 					// Restart the loop with new LP inverter parameters if the error of
 					// correction term is much larger than the error of LP term
@@ -1512,7 +1512,7 @@ int main(int argc, char **argv) {
 				// Calculate error of scalar channel (maximum value among timeslices)
 				double ratio_C_LP_err, s_err_max, s_err_av;
 				check_acc(count_lp, count_hp, errAnly,link_dirs,link_max, timeslices, ratio_C_LP_err,
-						  s_err_max, s_err_av);
+						  s_err_max, s_err_av,phases);
 				
 				QDPIO::cout << "count_lp = " << count_lp << ", Cr_err / LP_err = "
 				<< ratio_C_LP_err << ", Err_scalar = " << s_err_max << std::endl;
@@ -1559,7 +1559,7 @@ int main(int argc, char **argv) {
 						if (chkout) {
 							// checkout
 							checkout(count_lp, count_hp, errAnly, checkp[idx_cp].OutFileName,checkp[idx_cp].LaMETOutFileName,link_dirs,link_max,
-									 timeslices, checkp[idx_cp].chkout_order, Restarted);
+									 timeslices, checkp[idx_cp].chkout_order, Restarted,phases);
 							checkp[idx_cp].chkout_order++;
 							
 							// remove the passed checkpoint (the largest checkout accuracy)
