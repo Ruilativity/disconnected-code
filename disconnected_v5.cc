@@ -648,7 +648,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		if (chkout_order == -1){  // -1 means that this checkout is the final
 			sprintf(buffer, "%s_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
 		} else{
-			sprintf(buffer, "%s_qx%d_qy%d_qz%d_%02d", out_fname.c_str(), out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
+			sprintf(buffer, "%s_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
 		}
 		
 		std::string out_fname_c(buffer);
@@ -664,7 +664,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 			for (int g=0; g<NUM_G; ++g) {
 				char buffer[250];
 				sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
-						link_patterns[d],mom_list[p][0],mom_list[p][1],mom_list[p][2],
+						link_patterns[d],
 						timeslices[t],
 						g,
 						TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
@@ -683,7 +683,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 			for (int g = 0; g < NUM_G; ++g) {
 				char buffer[250];
 				sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
-						link_patterns[d] ,mom_list[p][0],mom_list[p][1],mom_list[p][2], timeslices[t], g,
+						link_patterns[d] , timeslices[t], g,
 						TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
 						TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
 						TrM_inv_err_r[d][p][g][t], TrM_inv_err_i[d][p][g][t]);
@@ -741,13 +741,13 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		if (chkout_order == -1){  // -1 means that this checkout is the final
 			sprintf(buffer_LaMET, "%s_qx%d_qy%d_qz%d_fn", lamet_out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
 		} else{
-			sprintf(buffer_LaMET, "%s_qx%d_qy%d_qz%d_%02d", out_fname.c_str(), lamet_out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
+			sprintf(buffer_LaMET, "%s_qx%d_qy%d_qz%d_%02d", lamet_out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
 		}
 		
 		std::string lamet_out_fname_c(buffer_LaMET);
 		
 		//write moment into file
-		TextFileWriter fout(lamet_out_fname_c);
+		TextFileWriter fout_lamet(lamet_out_fname_c);
 		
 		for (int d = 0; d < NumDisp; ++d) {
 			if(d>0 && d<NumDisp_mom) continue;
@@ -760,7 +760,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 				for (int g=0; g<NUM_G; ++g) {
 					char buffer[250];
 					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
-							link_patterns[d],mom_list[p][0],mom_list[p][1],mom_list[p][2],
+							link_patterns[d],
 							timeslices[t],
 							g,
 							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
@@ -779,7 +779,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 				for (int g = 0; g < NUM_G; ++g) {
 					char buffer[250];
 					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
-							link_patterns[d], mom_list[p][0],mom_list[p][1],mom_list[p][2], timeslices[t], g,
+							link_patterns[d], timeslices[t], g,
 							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
 							TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
 							TrM_inv_err_r[d][p][g][t], TrM_inv_err_i[d][p][g][t]);
@@ -1257,7 +1257,7 @@ int main(int argc, char **argv) {
 			
 			for (int d=0; d<NumDisp; ++d){
 				int disp=link_patterns[d];
-				if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
+				//if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
 				
 				shift_link(d,chi,psi,shift_psi,NumDisp_mom,NumDisp,disp,U);
 				
