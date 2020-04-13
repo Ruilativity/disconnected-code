@@ -6,6 +6,7 @@
 #include "gamma_ops.h"  // definition of gamma_ops() ftn
 #include <iomanip>      // std::setw
 #include <algorithm>
+#include <string>
 #include <fstream>
 
 //constexpr int num_links = 1; // calculate links forward and backward displacement
@@ -645,9 +646,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	for (int p = 0; p < NumMom; ++p){
 		char buffer[250];
 		if (chkout_order == -1){  // -1 means that this checkout is the final
-			sprintf(buffer, "%s_qx"+str(mom_list[p][0])+"_qy"+str(mom_list[p][1])+"_qz"+str(mom_list[p][2])+"_fn", out_fname.c_str());
+			sprintf(buffer, "%s_qx"+std::to_string(mom_list[p][0])+"_qy"+std::to_string(mom_list[p][1])+"_qz"+std::to_string(mom_list[p][2])+"_fn", out_fname.c_str());
 		} else{
-			sprintf(buffer, "%s_qx"+str(mom_list[p][0])+"_qy"+str(mom_list[p][1])+"_qz"+str(mom_list[p][2])+"_%02d", out_fname.c_str(), chkout_order);
+			sprintf(buffer, "%s_qx"+std::to_string(mom_list[p][0])+"_qy"+std::to_string(mom_list[p][1])+"_qz"+std::to_string(mom_list[p][2])+"_%02d", out_fname.c_str(), chkout_order);
 		}
 		
 		std::string out_fname_c(buffer);
@@ -737,9 +738,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		for (int p = 0; p < NumMom; ++p){
 		char buffer_LaMET[250];
 		if (chkout_order == -1){  // -1 means that this checkout is the final
-			sprintf(buffer_LaMET, "%s_qx"+str(mom_list[p][0])+"_qy"+str(mom_list[p][1])+"_qz"+str(mom_list[p][2])+"_fn", lamet_out_fname.c_str());
+			sprintf(buffer_LaMET, "%s_qx"+std::to_string(mom_list[p][0])+"_qy"+std::to_string(mom_list[p][1])+"_qz"+std::to_string(mom_list[p][2])+"_fn", lamet_out_fname.c_str());
 		} else{
-			sprintf(buffer_LaMET, "%s_qx"+str(mom_list[p][0])+"_qy"+str(mom_list[p][1])+"_qz"+str(mom_list[p][2])+"_%02d", lamet_out_fname.c_str(), chkout_order);
+			sprintf(buffer_LaMET, "%s_qx"+std::to_string(mom_list[p][0])+"_qy"+std::to_string(mom_list[p][1])+"_qz"+std::to_string(mom_list[p][2])+"_%02d", lamet_out_fname.c_str(), chkout_order);
 		}
 		
 		std::string lamet_out_fname_c(buffer_LaMET);
