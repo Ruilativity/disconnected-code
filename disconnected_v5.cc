@@ -641,36 +641,28 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	//-----------------------------
 	// Save results
 	//-----------------------------
-	char buffer[250];
-	char buffer_LaMET[250];
-	char buffer_cr[250];
-	if (chkout_order == -1){  // -1 means that this checkout is the final
-		sprintf(buffer, "%s_fn", out_fname.c_str());
-		sprintf(buffer_cr, "%s_cr_fn", out_fname.c_str());
-		sprintf(buffer_LaMET, "%s_fn", lamet_out_fname.c_str());
-	} else{
-		sprintf(buffer, "%s_%02d", out_fname.c_str(), chkout_order);
-		sprintf(buffer_cr, "%s_cr_%02d", out_fname.c_str(), chkout_order);
-		sprintf(buffer_LaMET, "%s_%02d", lamet_out_fname.c_str(), chkout_order);
-	}
-	
-	std::string out_fname_c(buffer);
-	std::string out_fname_cr_c(buffer_cr);
-	std::string lamet_out_fname_c(buffer_LaMET);
-	
-	//write moment into file
-	TextFileWriter fout(out_fname_c);
-	
+
+	for (int p = 0; p < NumMom; ++p){
+		char buffer[250];
+		if (chkout_order == -1){  // -1 means that this checkout is the final
+			sprintf(buffer, "%s_qx"+str(mom_list[p][0])+"_qy"+str(mom_list[p][1])+"_qz"+str(mom_list[p][2])+"_fn", out_fname.c_str());
+		} else{
+			sprintf(buffer, "%s_qx"+str(mom_list[p][0])+"_qy"+str(mom_list[p][1])+"_qz"+str(mom_list[p][2])+"_%02d", out_fname.c_str(), chkout_order);
+		}
+		
+		std::string out_fname_c(buffer);
+		
+		//write moment into file
+		TextFileWriter fout(out_fname_c);
 	for (int d = 0; d < NumDisp_mom; ++d) {
-		for (int p = 0; p < NumMom; ++p){
 		for (int t = 0; t < NumTs; ++t) {
 			
 #ifdef CALC_ERR_ERR
-			fout << "#d px py pz t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
+			fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
 			
 			for (int g=0; g<NUM_G; ++g) {
 				char buffer[250];
-				sprintf(buffer, "%d %d %d %d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
+				sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
 						link_patterns[d],mom_list[p][0],mom_list[p][1],mom_list[p][2],
 						timeslices[t],
 						g,
@@ -684,12 +676,12 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 				fout << oline;
 			}  // for (int g=0; g<NUM_G; ++g)
 #else
-			fout << "#d px py pz  t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
+			fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
 			<< "\n";
 			
 			for (int g = 0; g < NUM_G; ++g) {
 				char buffer[250];
-				sprintf(buffer, "%d %d %d %d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
+				sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
 						link_patterns[d] ,mom_list[p][0],mom_list[p][1],mom_list[p][2], timeslices[t], g,
 						TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
 						TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
@@ -742,19 +734,30 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		
 	// write LaMET type operators into a separate file
 	if(link_max>2){
-		TextFileWriter fout_lamet(lamet_out_fname_c);
+		for (int p = 0; p < NumMom; ++p){
+		char buffer_LaMET[250];
+		if (chkout_order == -1){  // -1 means that this checkout is the final
+			sprintf(buffer_LaMET, "%s_qx"+str(mom_list[p][0])+"_qy"+str(mom_list[p][1])+"_qz"+str(mom_list[p][2])+"_fn", lamet_out_fname.c_str());
+		} else{
+			sprintf(buffer_LaMET, "%s_qx"+str(mom_list[p][0])+"_qy"+str(mom_list[p][1])+"_qz"+str(mom_list[p][2])+"_%02d", lamet_out_fname.c_str(), chkout_order);
+		}
+		
+		std::string lamet_out_fname_c(buffer_LaMET);
+		
+		//write moment into file
+		TextFileWriter fout(lamet_out_fname_c);
 		
 		for (int d = 0; d < NumDisp; ++d) {
 			if(d>0 && d<NumDisp_mom) continue;
-			for(int p=0; p<NumMom; ++p) {
+			
 			for (int t = 0; t < NumTs; ++t) {
 				
 	#ifdef CALC_ERR_ERR
-				fout_lamet << "# d px py pz  t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
+				fout_lamet << "# d  t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
 				
 				for (int g=0; g<NUM_G; ++g) {
 					char buffer[250];
-					sprintf(buffer, "%d %d %d %d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
+					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
 							link_patterns[d],mom_list[p][0],mom_list[p][1],mom_list[p][2],
 							timeslices[t],
 							g,
@@ -768,12 +771,12 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 					fout_lamet << oline;
 				}  // for (int g=0; g<NUM_G; ++g)
 	#else
-				fout_lamet << "#d px py pz  t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
+				fout_lamet << "#d  t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
 				<< "\n";
 				
 				for (int g = 0; g < NUM_G; ++g) {
 					char buffer[250];
-					sprintf(buffer, "%d %d %d %d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
+					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
 							link_patterns[d], mom_list[p][0],mom_list[p][1],mom_list[p][2], timeslices[t], g,
 							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
 							TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
@@ -1086,7 +1089,7 @@ int main(int argc, char **argv) {
 #endif
 	
 	LatticeComplex corr_fn;
-	multi2d<DComplex> corr_fn_t(NumMom,Layout::lattSize()[Nd - 1]);
+	multi2d<DComplex> corr_fn_t;
 	
 	LatticeBoolean mask = false;
 	
@@ -1253,7 +1256,7 @@ int main(int argc, char **argv) {
 			
 			for (int d=0; d<NumDisp; ++d){
 				int disp=link_patterns[d];
-				//if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
+				if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
 				
 				shift_link(d,chi,psi,shift_psi,NumDisp_mom,NumDisp,disp,U);
 				
@@ -1261,7 +1264,7 @@ int main(int argc, char **argv) {
 					corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
 					
 					corr_fn_t = phases.sft(corr_fn);
-					for (int p=0; d<NumMom; ++p){
+					for (int p=0; p<NumMom; ++p){
 					for (int t = 0; t < NumTs; ++t) {
 						TrM_inv = corr_fn_t[p][timeslices[t]];
 						
@@ -1312,7 +1315,7 @@ int main(int argc, char **argv) {
 				multi4d<DComplex> TrM_inv_C_HP(NumDisp, NumMom, NUM_G, NumTs);
 				multi4d<DComplex> TrM_inv_C_LP(NumDisp, NumMom, NUM_G, NumTs);
 				for (int d = 0; d < NumDisp; ++d)
-					for (int p=0; d<NumMom; ++p)
+					for (int p=0; p<NumMom; ++p)
 					for (int g = 0; g < NUM_G; ++g)
 						for (int t = 0; t < NumTs; ++t) {
 							TrM_inv_C_HP[d][p][g][t] = zero;
@@ -1384,7 +1387,7 @@ int main(int argc, char **argv) {
 						corr_fn_t = phases.sft(corr_fn);
 						
 						// For the correction term, we don't need to add constant part Tr[2 kappa I]
-						for (int p=0; d<NumMom; ++p){
+						for (int p=0; p<NumMom; ++p){
 						for (int t = 0; t < NumTs; ++t)
 							TrM_inv_C_LP[d][p][g][t] = corr_fn_t[p][timeslices[t]];
 						}
