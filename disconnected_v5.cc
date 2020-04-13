@@ -646,9 +646,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	for (int p = 0; p < NumMom; ++p){
 		char buffer[250];
 		if (chkout_order == -1){  // -1 means that this checkout is the final
-			sprintf(buffer, "%s_qx"+std::to_string(mom_list[p][0])+"_qy"+std::to_string(mom_list[p][1])+"_qz"+std::to_string(mom_list[p][2])+"_fn", out_fname.c_str());
+			sprintf(buffer, "%s_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
 		} else{
-			sprintf(buffer, "%s_qx"+std::to_string(mom_list[p][0])+"_qy"+std::to_string(mom_list[p][1])+"_qz"+std::to_string(mom_list[p][2])+"_%02d", out_fname.c_str(), chkout_order);
+			sprintf(buffer, "%s_qx%d_qy%d_qz%d_%02d", out_fname.c_str(), out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
 		}
 		
 		std::string out_fname_c(buffer);
@@ -693,10 +693,11 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 #endif
 			
 		}  // for (int t=0; t<NumTs; ++t)
-		}	//for (int p = 0; p < NumMom; ++p)
-	}  // for disp
+		}// for disp
+		fout.close();
+	}  //for (int p = 0; p < NumMom; ++p)
 	
-	fout.close();
+	
 	
 //	// write the LP and Correction into separate files.
 //		TextFileWriter fout_cr(out_fname_cr_c);
@@ -738,9 +739,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		for (int p = 0; p < NumMom; ++p){
 		char buffer_LaMET[250];
 		if (chkout_order == -1){  // -1 means that this checkout is the final
-			sprintf(buffer_LaMET, "%s_qx"+std::to_string(mom_list[p][0])+"_qy"+std::to_string(mom_list[p][1])+"_qz"+std::to_string(mom_list[p][2])+"_fn", lamet_out_fname.c_str());
+			sprintf(buffer_LaMET, "%s_qx%d_qy%d_qz%d_fn", lamet_out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
 		} else{
-			sprintf(buffer_LaMET, "%s_qx"+std::to_string(mom_list[p][0])+"_qy"+std::to_string(mom_list[p][1])+"_qz"+std::to_string(mom_list[p][2])+"_%02d", lamet_out_fname.c_str(), chkout_order);
+			sprintf(buffer_LaMET, "%s_qx%d_qy%d_qz%d_%02d", out_fname.c_str(), lamet_out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
 		}
 		
 		std::string lamet_out_fname_c(buffer_LaMET);
@@ -788,10 +789,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	#endif
 				
 			}  // for (int t=0; t<NumTs; ++t)
-			}//for(int p=0; p<NumMom; ++p)
-		}  // for disp
-		
-		fout_lamet.close();
+			}// for disp
+			fout_lamet.close();
+		}  //for (int p = 0; p < NumMom; ++p)
 	}
 	
 	//-----------------------------
