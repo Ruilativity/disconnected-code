@@ -1242,12 +1242,28 @@ int main(int argc, char **argv) {
 	if(link_max>2) NumDisp_mom= pow(8,2)+1;
 	else NumDisp_mom= pow(link_dirs.size(),link_max)+1;
 	multi1d<SftMom> phases(4);
-	phases[0](input.param.mom2_list_local, false, Nd-1);
-	phases[1](input.param.mom2_list_1st_mom, false, Nd-1);
-	phases[2](input.param.mom2_list_2nd_mom, false, Nd-1);
-	phases[3](input.param.mom2_list_lamet, false, Nd-1);
+	
+	
+	
+	// some dummy variables used for mom2_list functions
+	multi1d<SftMomSrcPos_t> multi_srcs(1);
+	multi_srcs[0].src_pos.resize(Nd);
+	multi_srcs[0].src_pos=0;
+	multi_srcs[0].t_min = 0;
+    multi_srcs[0].t_max = Layout::lattSize()[j_decay] - 1;
+	multi1d<int> mom_offset;
+	mom_offset.resize(Nd-1);  /*!< Origin for the momentum */
+    mom_offset = 0;
+	//end
+	
+	
+	
+	phases[0](input.param.mom2_list_local, multi_srcs, mom_offset, false, Nd-1);
+	phases[1](input.param.mom2_list_1st_mom, multi_srcs, mom_offset, false, Nd-1);
+	phases[2](input.param.mom2_list_2nd_mom, multi_srcs, mom_offset, false, Nd-1);
+	phases[3](input.param.mom2_list_lamet, multi_srcs, mom_offset, false, Nd-1);
 	multi1d<int> NumMom(NumDisp);
-	for (d=0;d<NumDisp;++d){
+	for (int d=0;d<NumDisp;++d){
 		if (d==0) NumMom[d]=phases[0].numMom();
 		else if (d<NumDisp_mom && link_patterns[d]<100) NumMom[d]=phases[1].numMom();
 		else if (d<NumDisp_mom && link_patterns[d]>100) NumMom[d]=phases[2].numMom();
