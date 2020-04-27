@@ -1259,10 +1259,10 @@ int main(int argc, char **argv) {
 	
 	
 	
-	phases[0](input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
-	phases[1](input.param.mom2_list_1st_mom, origin_offs, mom_offset, false, j_decay);
-	phases[2](input.param.mom2_list_2nd_mom, origin_offs, mom_offset, false, j_decay);
-	phases[3](input.param.mom2_list_lamet, origin_offs, mom_offset, false, j_decay);
+	phases[0]=new SftMom(input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
+	phases[1]=new SftMom(input.param.mom2_list_1st_mom, origin_offs, mom_offset, false, j_decay);
+	phases[2]=new SftMom(input.param.mom2_list_2nd_mom, origin_offs, mom_offset, false, j_decay);
+	phases[3]=new SftMom(input.param.mom2_list_lamet, origin_offs, mom_offset, false, j_decay);
 	multi1d<int> NumMom(NumDisp);
 	for (int d=0;d<NumDisp;++d){
 		if (d==0) NumMom[d]=phases[0].numMom();
