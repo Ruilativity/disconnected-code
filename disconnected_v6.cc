@@ -338,7 +338,7 @@ struct ErrAnlyVars {
 		TrM_inv_LP_sqsum_r.resize(NumDisp);
 		TrM_inv_LP_sqsum_i.resize(NumDisp);
 		TrM_inv_C_sqsum_r.resize(NumDisp);
-		TrM_inv_C_sqsum_i.resize(NumDisp)
+		TrM_inv_C_sqsum_i.resize(NumDisp);
 		for(int d=0;d<NumDisp;++d){
 			TrM_inv_sum_LP[d].resize( NumMom[d], NUM_G, NumTs);
 			TrM_inv_sum_C[d].resize( NumMom[d], NUM_G, NumTs);
@@ -624,7 +624,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	// Calculate TSM estimate of TrM_inv
 	//--------------------------------------------------------------------
 	for (int d = 0; d < NumDisp; ++d)
-		for (int p = 0; p < NumMom; ++p)
+		for (int p = 0; p < NumMom[d]; ++p)
 		for (int g = 0; g < NUM_G; ++g)
 			for (int t = 0; t < NumTs; ++t)
 				TrM_inv_av[d][p][g][t] = TrM_inv_av_LP[d][p][g][t] + TrM_inv_av_C[d][p][g][t];
