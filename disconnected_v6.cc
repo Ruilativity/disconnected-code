@@ -482,7 +482,7 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 //====================================================================
 // Calculate statistical error, and save results
 //====================================================================
-void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname, std::vector<int> &link_dirs, int link_max, std::vector<int> &timeslices, int chkout_order, bool Restarted, multi1d<SftMom> &phases) {
+void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname, std::vector<int> &link_dirs, int link_max, std::vector<int> &timeslices, int chkout_order, bool Restarted, multi1d<SftMom*> &phases) {
 	int NumTs = timeslices.size();
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
@@ -1241,7 +1241,7 @@ int main(int argc, char **argv) {
 	int NumDisp_mom;
 	if(link_max>2) NumDisp_mom= pow(8,2)+1;
 	else NumDisp_mom= pow(link_dirs.size(),link_max)+1;
-	multi1d<SftMom> phases(4);
+	multi1d<SftMom*> phases(4);
 	
 	
 	
