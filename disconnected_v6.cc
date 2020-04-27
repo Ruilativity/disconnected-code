@@ -504,12 +504,10 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	
 	
 	for(int d=0;d< NumDisp;d++){
-		SftMom phases_tmp;
-		if(d==0) phases_tmp=*phases[0];
-		else if(d <NumDisp_mom && link_patterns[d] < 100) phases_tmp=*phases[1];
-		else if(d <NumDisp_mom && link_patterns[d] > 100) phases_tmp=*phases[2];
-		else phases_tmp=*phases[3];
-		NumMom[d]=phases_tmp.numMom();
+		if(d==0) NumMom[d]=*phases[0]->numMom();
+		else if(d <NumDisp_mom && link_patterns[d] < 100) NumMom[d]=*phases[1]->numMom();
+		else if(d <NumDisp_mom && link_patterns[d] > 100) NumMom[d]=*phases[2]->numMom();
+		else NumMom[d]=*phases[3]->numMom();
 	}
 	
 	
