@@ -711,9 +711,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	for (int p = 0; p < phases[0]->numMom(); ++p){
 		char buffer[250];
 		if (chkout_order == -1){  // -1 means that this checkout is the final
-			sprintf(buffer, "%s_local_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
+			sprintf(buffer, "%s_local_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[0][p][0],mom_list[0][p][1],mom_list[0][p][2]);
 		} else{
-			sprintf(buffer, "%s_local_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
+			sprintf(buffer, "%s_local_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[0][p][0],mom_list[0][p][1],mom_list[0][p][2], chkout_order);
 		}
 		
 		std::string out_fname_c(buffer);
@@ -766,9 +766,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	if(link_max>0) for (int p = 0; p < phases[1]->numMom(); ++p){
 			char buffer[250];
 			if (chkout_order == -1){  // -1 means that this checkout is the final
-				sprintf(buffer, "%s_1st_mom_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
+				sprintf(buffer, "%s_1st_mom_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[1][p][0],mom_list[p][1],mom_list[1][p][2]);
 			} else{
-				sprintf(buffer, "%s_1st_mom_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
+				sprintf(buffer, "%s_1st_mom_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[1][p][0],mom_list[p][1],mom_list[1][p][2], chkout_order);
 			}
 			
 			std::string out_fname_c(buffer);
@@ -821,9 +821,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	if(link_max>1) for (int p = 0; p < phases[2]->numMom(); ++p){
 			char buffer[250];
 			if (chkout_order == -1){  // -1 means that this checkout is the final
-				sprintf(buffer, "%s_2nd_mom_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
+				sprintf(buffer, "%s_2nd_mom_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[2][p][0],mom_list[2][p][1],mom_list[2][p][2]);
 			} else{
-				sprintf(buffer, "%s_2nd_mom_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
+				sprintf(buffer, "%s_2nd_mom_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[2][p][0],mom_list[2][p][1],mom_list[2][p][2], chkout_order);
 			}
 			
 			std::string out_fname_c(buffer);
@@ -876,9 +876,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	if(link_max>2) for (int p = 0; p < phases[3]->numMom(); ++p){
 			char buffer[250];
 			if (chkout_order == -1){  // -1 means that this checkout is the final
-				sprintf(buffer, "%s_lamet_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
+				sprintf(buffer, "%s_lamet_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[3][p][0],mom_list[3][p][1],mom_list[3][p][2]);
 			} else{
-				sprintf(buffer, "%s_lamet_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
+				sprintf(buffer, "%s_lamet_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[3][p][0],mom_list[3][p][1],mom_list[3][p][2], chkout_order);
 			}
 			
 			std::string out_fname_c(buffer);
