@@ -1250,6 +1250,7 @@ int main(int argc, char **argv) {
 	multi_srcs[0].src_pos.resize(Nd);
 	multi_srcs[0].src_pos=0;
 	multi_srcs[0].t_min = 0;
+	int j_decay=3;
     multi_srcs[0].t_max = Layout::lattSize()[j_decay] - 1;
 	multi1d<int> mom_offset;
 	mom_offset.resize(Nd-1);  /*!< Origin for the momentum */
