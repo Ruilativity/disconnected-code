@@ -516,11 +516,11 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	
 	
 	// TSM estimate of Tr [ M^{-1} \gamma ]
-	multi1d<multi3d<DComplex>> TrM_inv_av(NumDisp)
+	multi1d<multi3d<DComplex>> TrM_inv_av(NumDisp);
 	
 	// Low precision estimate and correction to Tr [ G^{-1} \Gamma ]
-	multi1d<multi3d<DComplex>> TrM_inv_av_LP(NumDisp)
-	multi1d<multi3d<DComplex>> TrM_inv_av_C(NumDisp)
+	multi1d<multi3d<DComplex>> TrM_inv_av_LP(NumDisp);
+	multi1d<multi3d<DComplex>> TrM_inv_av_C(NumDisp);
 	
 	for(int d=0;d< NumDisp;d++){
 		TrM_inv_av[d].resize(NumMom[d], NUM_G, NumTs);
@@ -1246,11 +1246,11 @@ int main(int argc, char **argv) {
 	
 	
 	// some dummy variables used for mom2_list functions
-	multi1d<SftMomSrcPos_t> multi_srcs(1);
-	multi_srcs[0].src_pos.resize(Nd);
-	multi_srcs[0].src_pos=0;
-	multi_srcs[0].t_min = 0;
-	int j_decay=3;
+	multi1d<SftMomSrcPos_t> origin_offs(1);
+	origin_offs[0].src_pos.resize(Nd);
+	origin_offs[0].src_pos=0;
+	origin_offs[0].t_min = 0;
+	int j_decay=Nd-1;
     multi_srcs[0].t_max = Layout::lattSize()[j_decay] - 1;
 	multi1d<int> mom_offset;
 	mom_offset.resize(Nd-1);  /*!< Origin for the momentum */
@@ -1259,10 +1259,10 @@ int main(int argc, char **argv) {
 	
 	
 	
-	phases[0](input.param.mom2_list_local, multi_srcs, mom_offset, false, Nd-1);
-	phases[1](input.param.mom2_list_1st_mom, multi_srcs, mom_offset, false, Nd-1);
-	phases[2](input.param.mom2_list_2nd_mom, multi_srcs, mom_offset, false, Nd-1);
-	phases[3](input.param.mom2_list_lamet, multi_srcs, mom_offset, false, Nd-1);
+	phases[0].SftMom(input.param.mom2_list_local, multi_srcs, mom_offset, false, j_decay);
+	phases[1].SftMom(input.param.mom2_list_1st_mom, multi_srcs, mom_offset, false, j_decay);
+	phases[2].SftMom(input.param.mom2_list_2nd_mom, multi_srcs, mom_offset, false, j_decay);
+	phases[3].SftMom(input.param.mom2_list_lamet, multi_srcs, mom_offset, false, j_decay);
 	multi1d<int> NumMom(NumDisp);
 	for (int d=0;d<NumDisp;++d){
 		if (d==0) NumMom[d]=phases[0].numMom();
