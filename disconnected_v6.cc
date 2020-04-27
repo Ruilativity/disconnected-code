@@ -1251,7 +1251,7 @@ int main(int argc, char **argv) {
 	origin_offs[0].src_pos=0;
 	origin_offs[0].t_min = 0;
 	int j_decay=Nd-1;
-    multi_srcs[0].t_max = Layout::lattSize()[j_decay] - 1;
+    origin_offs[0].t_max = Layout::lattSize()[j_decay] - 1;
 	multi1d<int> mom_offset;
 	mom_offset.resize(Nd-1);  /*!< Origin for the momentum */
     mom_offset = 0;
