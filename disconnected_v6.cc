@@ -482,7 +482,7 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 //====================================================================
 // Calculate statistical error, and save results
 //====================================================================
-void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname, std::vector<int> &link_dirs, int link_max, std::vector<int> &timeslices, int chkout_order, bool Restarted, multi1d<SftMom*> &phases) {
+void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname, std::vector<int> &link_dirs, int link_max, std::vector<int> &timeslices, int chkout_order, bool Restarted, multi1d<SftMom> &phases) {
 	int NumTs = timeslices.size();
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
@@ -493,9 +493,9 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	multi1d<int> NumMom(NumDisp);
 	multi1d<multi2d<int>> mom_list(4);
 	for(int i=0;i<4;++i){
-		mom_list[i].resize(phases[i]->numMom(),3);
-		for(int p=0; p<phases[i]->numMom(); ++p) {
-			multi1d<int> pp = phases[i]->numToMom(p);
+		mom_list[i].resize(phases[i].numMom(),3);
+		for(int p=0; p<phases[i].numMom(); ++p) {
+			multi1d<int> pp = phases[i].numToMom(p);
 			mom_list[i][p][0]=pp[0];
 			mom_list[i][p][1]=pp[1];
 			mom_list[i][p][2]=pp[2];
@@ -710,7 +710,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	// Save results
 	//-----------------------------
 
-	for (int p = 0; p < phases[0]->numMom(); ++p){
+	for (int p = 0; p < phases[0].numMom(); ++p){
 		char buffer[250];
 		if (chkout_order == -1){  // -1 means that this checkout is the final
 			sprintf(buffer, "%s_local_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
@@ -765,7 +765,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	}  //for (int p = 0; p < NumMom; ++p)
 	
 	
-	if(link_max>0) for (int p = 0; p < phases[1]->numMom(); ++p){
+	if(link_max>0) for (int p = 0; p < phases[1].numMom(); ++p){
 			char buffer[250];
 			if (chkout_order == -1){  // -1 means that this checkout is the final
 				sprintf(buffer, "%s_1st_mom_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
@@ -820,7 +820,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 			fout.close();
 		}  //for (int p = 0; p < NumMom; ++p)
 	
-	if(link_max>1) for (int p = 0; p < phases[2]->numMom(); ++p){
+	if(link_max>1) for (int p = 0; p < phases[2].numMom(); ++p){
 			char buffer[250];
 			if (chkout_order == -1){  // -1 means that this checkout is the final
 				sprintf(buffer, "%s_2nd_mom_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
@@ -875,7 +875,7 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 			fout.close();
 		}  //for (int p = 0; p < NumMom; ++p)
 	
-	if(link_max>2) for (int p = 0; p < phases[3]->numMom(); ++p){
+	if(link_max>2) for (int p = 0; p < phases[3].numMom(); ++p){
 			char buffer[250];
 			if (chkout_order == -1){  // -1 means that this checkout is the final
 				sprintf(buffer, "%s_lamet_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
@@ -1241,9 +1241,6 @@ int main(int argc, char **argv) {
 	int NumDisp_mom;
 	if(link_max>2) NumDisp_mom= pow(8,2)+1;
 	else NumDisp_mom= pow(link_dirs.size(),link_max)+1;
-	multi1d<SftMom*> phases(4);
-	
-	
 	
 	// some dummy variables used for mom2_list functions
 	multi1d<SftMomSrcPos_t> origin_offs(1);
@@ -1257,18 +1254,18 @@ int main(int argc, char **argv) {
     mom_offset = 0;
 	//end
 	
-	
-	
-	phases[0]=new SftMom(input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
-	phases[1]=new SftMom(input.param.mom2_list_1st_mom, origin_offs, mom_offset, false, j_decay);
-	phases[2]=new SftMom(input.param.mom2_list_2nd_mom, origin_offs, mom_offset, false, j_decay);
-	phases[3]=new SftMom(input.param.mom2_list_lamet, origin_offs, mom_offset, false, j_decay);
+	multi1d<SftMom> phases;
+	phases.resize(4);
+	phases[0](input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
+	phases[1](input.param.mom2_list_1st_mom, origin_offs, mom_offset, false, j_decay);
+	phases[2](input.param.mom2_list_2nd_mom, origin_offs, mom_offset, false, j_decay);
+	phases[3](input.param.mom2_list_lamet, origin_offs, mom_offset, false, j_decay);
 	multi1d<int> NumMom(NumDisp);
 	for (int d=0;d<NumDisp;++d){
-		if (d==0) NumMom[d]=phases[0]->numMom();
-		else if (d<NumDisp_mom && link_patterns[d]<100) NumMom[d]=phases[1]->numMom();
-		else if (d<NumDisp_mom && link_patterns[d]>100) NumMom[d]=phases[2]->numMom();
-		else NumMom[d]=phases[3]->numMom();
+		if (d==0) NumMom[d]=phases[0].numMom();
+		else if (d<NumDisp_mom && link_patterns[d]<100) NumMom[d]=phases[1].numMom();
+		else if (d<NumDisp_mom && link_patterns[d]>100) NumMom[d]=phases[2].numMom();
+		else NumMom[d]=phases[3].numMom();
 	}
 	
 	// Noise source (eta) and Solution (psi)
@@ -1465,10 +1462,10 @@ int main(int argc, char **argv) {
 				for (int g = 0; g < NUM_G; ++g) {
 					corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
 					
-					if (d==0) corr_fn_t = phases[0]->sft(corr_fn);
-					else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1]->sft(corr_fn);
-					else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2]->sft(corr_fn);
-					else corr_fn_t = phases[3]->sft(corr_fn);
+					if (d==0) corr_fn_t = phases[0].sft(corr_fn);
+					else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1].sft(corr_fn);
+					else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2].sft(corr_fn);
+					else corr_fn_t = phases[3].sft(corr_fn);
 					for (int p=0; p<NumMom[d]; ++p){
 					for (int t = 0; t < NumTs; ++t) {
 						TrM_inv = corr_fn_t[p][timeslices[t]];
@@ -1592,10 +1589,10 @@ int main(int argc, char **argv) {
 					for (int g = 0; g < NUM_G; ++g) {
 						corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
 						
-						if (d==0) corr_fn_t = phases[0]->sft(corr_fn);
-						else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1]->sft(corr_fn);
-						else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2]->sft(corr_fn);
-						else corr_fn_t = phases[3]->sft(corr_fn);
+						if (d==0) corr_fn_t = phases[0].sft(corr_fn);
+						else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1].sft(corr_fn);
+						else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2].sft(corr_fn);
+						else corr_fn_t = phases[3].sft(corr_fn);
 						
 						// For the correction term, we don't need to add constant part Tr[2 kappa I]
 						for (int p=0; p<NumMom[d]; ++p){
@@ -1642,10 +1639,10 @@ int main(int argc, char **argv) {
 					
 					for (int g = 0; g < NUM_G; ++g) {
 						corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
-						if (d==0) corr_fn_t = phases[0]->sft(corr_fn);
-						else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1]->sft(corr_fn);
-						else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2]->sft(corr_fn);
-						else corr_fn_t = phases[3]->sft(corr_fn);
+						if (d==0) corr_fn_t = phases[0].sft(corr_fn);
+						else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1].sft(corr_fn);
+						else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2].sft(corr_fn);
+						else corr_fn_t = phases[3].sft(corr_fn);
 						
 						// For the correction term, we don't need to add constant part Tr[2 kappa I]
 						for(int p=0; p<NumMom[d]; ++p) {
