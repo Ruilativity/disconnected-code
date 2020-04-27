@@ -1259,10 +1259,10 @@ int main(int argc, char **argv) {
 	
 	
 	
-	phases[0].init(input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
-	phases[1].init(input.param.mom2_list_1st_mom, origin_offs, mom_offset, false, j_decay);
-	phases[2].init(input.param.mom2_list_2nd_mom, origin_offs, mom_offset, false, j_decay);
-	phases[3].init(input.param.mom2_list_lamet, origin_offs, mom_offset, false, j_decay);
+	phases[0](input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
+	phases[1](input.param.mom2_list_1st_mom, origin_offs, mom_offset, false, j_decay);
+	phases[2](input.param.mom2_list_2nd_mom, origin_offs, mom_offset, false, j_decay);
+	phases[3](input.param.mom2_list_lamet, origin_offs, mom_offset, false, j_decay);
 	multi1d<int> NumMom(NumDisp);
 	for (int d=0;d<NumDisp;++d){
 		if (d==0) NumMom[d]=phases[0].numMom();
@@ -1520,8 +1520,8 @@ int main(int argc, char **argv) {
 				multi1d<multi3d<DComplex>> TrM_inv_C_HP(NumDisp);
 				multi1d<multi3d<DComplex>> TrM_inv_C_LP(NumDisp);
 				for (int d = 0; d < NumDisp; ++d){
-					TrM_inv_C_HP.resize(NumMom[d], NUM_G, NumTs);
-					TrM_inv_C_LP.resize(NumMom[d], NUM_G, NumTs);
+					TrM_inv_C_HP[d].resize(NumMom[d], NUM_G, NumTs);
+					TrM_inv_C_LP[d].resize(NumMom[d], NUM_G, NumTs);
 					for (int p=0; p<NumMom[d]; ++p)
 					for (int g = 0; g < NUM_G; ++g)
 						for (int t = 0; t < NumTs; ++t) {
@@ -1700,8 +1700,8 @@ int main(int argc, char **argv) {
 				// Check whether restart is needed
 				if (count_lp == restart_NrLP && !Restarted) {
 					double ratio_C_LP_err, s_err_max, s_err_av;
-					check_acc(count_lp, count_hp, errAnly, link_dirs, link_max, timeslices, ratio_C_LP_err,
-							  s_err_max, s_err_av,phases);
+					check_acc(count_lp, count_hp, errAnly, timeslices, ratio_C_LP_err,
+							  s_err_max, s_err_av);
 					
 					// Restart the loop with new LP inverter parameters if the error of
 					// correction term is much larger than the error of LP term
@@ -1728,8 +1728,8 @@ int main(int argc, char **argv) {
 			if (count_lp >= Min_Nr_LP) {
 				// Calculate error of scalar channel (maximum value among timeslices)
 				double ratio_C_LP_err, s_err_max, s_err_av;
-				check_acc(count_lp, count_hp, errAnly,link_dirs,link_max, timeslices, ratio_C_LP_err,
-						  s_err_max, s_err_av,phases);
+				check_acc(count_lp, count_hp, errAnly, timeslices, ratio_C_LP_err,
+						  s_err_max, s_err_av);
 				
 				QDPIO::cout << "count_lp = " << count_lp << ", Cr_err / LP_err = "
 				<< ratio_C_LP_err << ", Err_scalar = " << s_err_max << std::endl;
