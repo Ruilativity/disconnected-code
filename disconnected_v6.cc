@@ -1820,7 +1820,8 @@ int main(int argc, char **argv) {
 	<< std::endl;
 	
 	QDPIO::cout << "DISCO: ran successfully" << std::endl;
-	
+	QDPIO::cerr << "Successfully Run " << std::endl;
+	QDP_abort(1);
 	END_CODE();
 	
 	Chroma::finalize();
