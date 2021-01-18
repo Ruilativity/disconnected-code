@@ -391,10 +391,12 @@ void check_acc(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::vector<int> &tim
 	// Calculate average
 	if (Nr_LP != 0) for (int t = 0; t < NumTs; ++t)
 		TrM_inv_av_LP[t] = errAnly.TrM_inv_sum_LP[d][p][g][t] / (double)Nr_LP;
-	
+	else for (int t = 0; t < NumTs; ++t)
+                TrM_inv_av_LP[t] =0.0;	
 	if (Nr_HP != 0) for (int t = 0; t < NumTs; ++t)
 		TrM_inv_av_C[t] = errAnly.TrM_inv_sum_C[d][p][g][t] / (double)Nr_HP;
-	
+	else for (int t = 0; t < NumTs; ++t)
+                TrM_inv_av_C[t] =0.0;
 	//-----------------------------
 	// Calculate statistical error
 	//-----------------------------
@@ -532,13 +534,21 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		for (int g = 0; g < NUM_G; ++g)
 			for (int t = 0; t < NumTs; ++t)
 				TrM_inv_av_LP[d][p][g][t] = errAnly.TrM_inv_sum_LP[d][p][g][t] / (double)Nr_LP;
-	
+	else for (int d = 0; d < NumDisp; ++d)
+                for (int p = 0; p < NumMom[d]; ++p)
+                for (int g = 0; g < NUM_G; ++g)
+                        for (int t = 0; t < NumTs; ++t)
+                                TrM_inv_av_LP[d][p][g][t] =0.0;	
 	if (Nr_HP != 0) for (int d = 0; d < NumDisp; ++d)
 		for (int p = 0; p < NumMom[d]; ++p)
 		for (int g = 0; g < NUM_G; ++g)
 			for (int t = 0; t < NumTs; ++t)
 				TrM_inv_av_C[d][p][g][t] = errAnly.TrM_inv_sum_C[d][p][g][t] / (double)Nr_HP;
-	
+	else for (int d = 0; d < NumDisp; ++d)
+                for (int p = 0; p < NumMom[d]; ++p)
+                for (int g = 0; g < NUM_G; ++g)
+                        for (int t = 0; t < NumTs; ++t)
+                                TrM_inv_av_C[d][p][g][t] =0.0;
 	//-----------------------------
 	// Calculate statistical error
 	//-----------------------------
