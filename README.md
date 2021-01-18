@@ -25,3 +25,7 @@ Do first and second moments for all cases, do LaMET for link_max>2, save to diff
 
 2019-12-02:
 Rearrange the link patterns so that no repeated shifts are made for moment operators. Saved 56 shifts.
+
+
+2021-01-18:
+Initialize the LP results and correction terms to 0. In case that N_LP or N_HP=0.
