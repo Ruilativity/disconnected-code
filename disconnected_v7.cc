@@ -1712,7 +1712,7 @@ int main(int argc, char **argv) {
 				QDPIO::cout << std::endl;
 				
 				// Increase number of hp iteration counter
-				++count_hp;
+				if (spin_index==max_spin_comp-1 && color_index==max_color_comp-1) ++count_hp;
 				
 			}  // if ( Nr_LPHP_ratio > 0  &&  i%Nr_LPHP_ratio == 0)
 			
