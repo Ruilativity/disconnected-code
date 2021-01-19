@@ -1428,8 +1428,8 @@ int main(int argc, char **argv) {
 			swatch.start();
             
             
-            for (spin_index=0,spin_index<max_spin_comp,spin_index++)
-                for (color_index=0,color_index<max_color_comp,color_index++) {
+            for (int spin_index=0;spin_index<max_spin_comp;spin_index++)
+                for (int color_index=0;color_index<max_color_comp;color_index++) {
                 
                     //Initialize an LP results for corrections
                     multi1d<multi3d<DComplex>> TrM_inv_C_LP(NumDisp);
@@ -1450,34 +1450,34 @@ int main(int argc, char **argv) {
                         if (NoiseSrcType == "Z4") {
                             eta = zero;
                         LatticeReal rnd1, theta;
-                        Real twopiN = Chroma::twopi / N;   // twopi defined in chroma/lib/chromabase.h
+                        Real twopiN = Chroma::twopi / 4;   // twopi defined in chroma/lib/chromabase.h
                         LatticeComplex c;
                         LatticeColorVector colorvec = zero;
                         
                         if (spin_dilute == false)
-                            for (spin_index_tmp=0,spin_index_tmp<Ns;spin_index_tmp++){
+                            for (int spin_index_tmp=0;spin_index_tmp<Ns;spin_index_tmp++){
                                 random(rnd1);
-                                theta = twopiN * floor(N*rnd1);
+                                theta = twopiN * floor(4*rnd1);
                                 c = cmplx(cos(theta),sin(theta));
                                 
                                 colorvec = peekSpin(eta,spin_index_tmp);
                                 pokeSpin(eta,pokeColor(colorvec,c,color_index),spin_index_tmp);                            }
                         else if (spin_dilute == false)
-                            for (color_index_tmp=0,color_index_tmp<Nc;color_index_tmp++){
+                            for (int color_index_tmp=0;color_index_tmp<Nc;color_index_tmp++){
                                 random(rnd1);
-                                theta = twopiN * floor(N*rnd1);
+                                theta = twopiN * floor(4*rnd1);
                                 c = cmplx(cos(theta),sin(theta));
                                 
                                 colorvec = peekSpin(eta,spin_index);
                                 pokeSpin(eta,pokeColor(colorvec,c,color_index_tmp),spin_index);                            }
                         else {
                             random(rnd1);
-                            theta = twopiN * floor(N*rnd1);
+                            theta = twopiN * floor(4*rnd1);
                             c = cmplx(cos(theta),sin(theta));
                             
                             colorvec = peekSpin(eta,spin_index);
                             pokeSpin(eta,pokeColor(colorvec,c,color_index),spin_index);
-                            +}
+                            }
                         }
                         else {
                             QDPIO::cerr << "Error! Unknown dilute noise source type " << NoiseSrcType
