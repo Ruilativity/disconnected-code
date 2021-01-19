@@ -1744,7 +1744,7 @@ int main(int argc, char **argv) {
 					}  // if (ratio_C_LP_err > restart_factor)
 				}  // if (count_lp == restart_NrLP && !Restarted)
 			}  // if (noise_input_version == 2)
-			
+			} // for (spin_index=0,spin_index<max_spin_comp,spin_index++) for (color=0,spin_index<max_spin_comp,spin_index++)
 			//------------------------------------------
 			// Checkout or Finish
 			//------------------------------------------
@@ -1822,7 +1822,7 @@ int main(int argc, char **argv) {
 				
 				if (all_empty) break;
 			}  // if (count_lp >= Min_Nr_LP)
-        } // for (spin_index=0,spin_index<max_spin_comp,spin_index++) for (color=0,spin_index<max_spin_comp,spin_index++)
+        
 		}  // for (int count_lp=1; count_lp <= Max_Nr_LP; ++count_lp)
 		
 		xml_out.flush();
