@@ -1426,66 +1426,87 @@ int main(int argc, char **argv) {
 		for (int count_lp = 1; count_lp <= Max_Nr_LP; ++count_lp) {
 			swatch.reset();
 			swatch.start();
-            
-            
-            for (int spin_index=0;spin_index<max_spin_comp;spin_index++)
-                for (int color_index=0;color_index<max_color_comp;color_index++) {
-                
-                    //Initialize an LP results for corrections
-                    multi1d<multi3d<DComplex>> TrM_inv_C_LP(NumDisp);
-                    for (int d = 0; d < NumDisp; ++d){
-                        TrM_inv_C_LP[d].resize(NumMom[d], NUM_G, NumTs);
-                        for (int p=0; p<NumMom[d]; ++p)
-                            for (int g = 0; g < NUM_G; ++g)
-                                for (int t = 0; t < NumTs; ++t) {
-                                    TrM_inv_C_LP[d][p][g][t] = zero;
-                                }
-                    }
+			LatticeReal rnd1, theta; // for full dilution, fix the phase for all spin-color components.
+			multi1d<LatticeReal> theta_partial; // for partial dilution, fix the phase for only one index.
+			Real twopiN = Chroma::twopi / 4;
+			if (spin_dilute || color_dilute) {
+				
+				//Make dilute noise source
+				if (NoiseSrcType == "Z4") {
+					if (spin_dilute == false){
+						theta_partial.resize(Ns);
+						for (int spin_index_tmp=0;spin_index_tmp<Ns;spin_index_tmp++){
+							random(rnd1);
+							theta_partial[spin_index_tmp]=twopiN * floor(4*rnd1);
+						}
+					}
+					else if (spin_dilute == false){
+						theta_partial.resize(Nc);
+						for (int color_index_tmp=0;color_index_tmp<Ns;color_index_tmp++){
+							random(rnd1);
+							theta_partial[color_index_tmp]=twopiN * floor(4*rnd1);
+						}
+					}
+						
+					else {
+						random(rnd1);
+						theta = twopiN * floor(4*rnd1);
+					}
+				}
+				else {
+					QDPIO::cerr << "Error! Unknown dilute noise source type " << NoiseSrcType
+					<< std::endl;
+					QDPIO::cerr << "Allowed type is Z4."
+					<< std::endl;
+					QDP_abort(1);
+				}
+			}
 			
-			QDPIO::cout << "TSM Low Precision Estimation loop; iter = " << count_lp
-			<< std::endl;
+			for (int spin_index=0;spin_index<max_spin_comp;spin_index++)
+				for (int color_index=0;color_index<max_color_comp;color_index++) {
+				
+					//Initialize an LP results for corrections
+					multi1d<multi3d<DComplex>> TrM_inv_C_LP(NumDisp);
+					for (int d = 0; d < NumDisp; ++d){
+						TrM_inv_C_LP[d].resize(NumMom[d], NUM_G, NumTs);
+						for (int p=0; p<NumMom[d]; ++p)
+							for (int g = 0; g < NUM_G; ++g)
+								for (int t = 0; t < NumTs; ++t) {
+									TrM_inv_C_LP[d][p][g][t] = zero;
+								}
+					}
+
+					
+			
+			QDPIO::cout << "TSM Low Precision Estimation loop; iter = " << count_lp << " spin = " << spin_index << " color = " << color_index << std::endl;
                     if (spin_dilute || color_dilute) {
                         
                         //Make dilute noise source
-                        if (NoiseSrcType == "Z4") {
-                            eta = zero;
-                        LatticeReal rnd1, theta;
-                        Real twopiN = Chroma::twopi / 4;   // twopi defined in chroma/lib/chromabase.h
+                        
+						eta = zero;
                         LatticeComplex c;
                         LatticeColorVector colorvec = zero;
                         
                         if (spin_dilute == false)
                             for (int spin_index_tmp=0;spin_index_tmp<Ns;spin_index_tmp++){
-                                random(rnd1);
-                                theta = twopiN * floor(4*rnd1);
-                                c = cmplx(cos(theta),sin(theta));
+                                
+                                c = cmplx(cos(theta_partial[spin_index_tmp]),sin(cos(theta_partial[spin_index_tmp]));
                                 
                                 colorvec = peekSpin(eta,spin_index_tmp);
                                 pokeSpin(eta,pokeColor(colorvec,c,color_index),spin_index_tmp);                            }
                         else if (spin_dilute == false)
                             for (int color_index_tmp=0;color_index_tmp<Nc;color_index_tmp++){
-                                random(rnd1);
-                                theta = twopiN * floor(4*rnd1);
-                                c = cmplx(cos(theta),sin(theta));
+                                c = cmplx(cos(cos(theta_partial[color_index_tmp]),sin(theta_partial[color_index_tmp]));
                                 
                                 colorvec = peekSpin(eta,spin_index);
                                 pokeSpin(eta,pokeColor(colorvec,c,color_index_tmp),spin_index);                            }
                         else {
-                            random(rnd1);
-                            theta = twopiN * floor(4*rnd1);
                             c = cmplx(cos(theta),sin(theta));
                             
                             colorvec = peekSpin(eta,spin_index);
                             pokeSpin(eta,pokeColor(colorvec,c,color_index),spin_index);
                             }
-                        }
-                        else {
-                            QDPIO::cerr << "Error! Unknown dilute noise source type " << NoiseSrcType
-                            << std::endl;
-                            QDPIO::cerr << "Allowed type is Z4."
-                            << std::endl;
-                            QDP_abort(1);
-                        }
+					
                     }
                     else { // Make regular noise source
 			
@@ -1517,12 +1538,15 @@ int main(int argc, char **argv) {
 			}
             }
 			
+			
 			// Calculate only on the timeslices
 			if (dilute) {
 				for (int t = 0; t < NumTs; ++t)
 					mask |= Layout::latticeCoordinate(3) == timeslices[t];
 				eta = where(mask, eta, LatticeFermion(zero));
 			}
+			
+			
 			
 			psi = zero;  // Initialize psi
 			
