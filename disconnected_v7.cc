@@ -1490,13 +1490,13 @@ int main(int argc, char **argv) {
                         if (spin_dilute == false)
                             for (int spin_index_tmp=0;spin_index_tmp<Ns;spin_index_tmp++){
                                 
-                                c = cmplx(cos(theta_partial[spin_index_tmp]),sin(cos(theta_partial[spin_index_tmp]));
+                                c = cmplx(cos(theta_partial[spin_index_tmp]),sin(theta_partial[spin_index_tmp]));
                                 
                                 colorvec = peekSpin(eta,spin_index_tmp);
                                 pokeSpin(eta,pokeColor(colorvec,c,color_index),spin_index_tmp);                            }
                         else if (spin_dilute == false)
                             for (int color_index_tmp=0;color_index_tmp<Nc;color_index_tmp++){
-                                c = cmplx(cos(cos(theta_partial[color_index_tmp]),sin(theta_partial[color_index_tmp]));
+                                c = cmplx(cos(theta_partial[color_index_tmp]),sin(theta_partial[color_index_tmp]));
                                 
                                 colorvec = peekSpin(eta,spin_index);
                                 pokeSpin(eta,pokeColor(colorvec,c,color_index_tmp),spin_index);                            }

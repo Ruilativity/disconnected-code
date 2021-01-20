@@ -29,3 +29,7 @@ Rearrange the link patterns so that no repeated shifts are made for moment opera
 
 2021-01-18:
 Initialize the LP results and correction terms to 0. In case that N_LP or N_HP=0.
+
+2021-01-19:
+fix the random phase for different spin & color components, because they're already diagonal in the dilution procedure
+
