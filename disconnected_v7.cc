@@ -1598,10 +1598,11 @@ int main(int argc, char **argv) {
 					for (int t = 0; t < NumTs; ++t) {
 						TrM_inv = corr_fn_t[p][timeslices[t]];
 						
+						TrM_inv_C_LP[d][p][g][t] = TrM_inv;// the correction term don't need the constant trace.
+						
 						// For scalar case, HPE should correct Tr(2 kappa I) = 24*kappa*L^3
 						if (g == 0 && use_HPE && spin_index == max_spin_comp-1 && color_index == max_color_comp -1)
 							TrM_inv += 24.0 * kappa * pow(Layout::lattSize()[0], 3);
-                        TrM_inv_C_LP[d][p][g][t] = TrM_inv;
 						errAnly.TrM_inv_sum_LP[d][p][g][t] += TrM_inv;
 						
 						// Statistical error estimation
