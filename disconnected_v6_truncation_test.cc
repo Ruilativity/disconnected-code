@@ -1126,8 +1126,8 @@ int main(int argc, char **argv) {
 	
 	// Initialize the RNG seed
 	srand(input.rng_seed);
-	QDP::Seed qdp_rng_seed;
-	for(int idx_seed=0;idx_seed<4;idx_seed++) qdp_rng_seed.elem(idx_seed)=rand();
+	QDP::Seed qdp_rng_seed(11);
+	for(int idx_seed=0;idx_seed<4;idx_seed++) qdp_rng_seed.elem().elem().elem(idx_seed)=rand();
 	QDP::RNG::setrn(qdp_rng_seed); // initialize a qdp seed
 	write(xml_out, "RNG", input.rng_seed);
 	
@@ -1429,7 +1429,7 @@ int main(int argc, char **argv) {
 					  QDPIO::cout <<"): "<< peekSite(rnd1,coord) <<std::endl;
 				}
 				}
-				for (int idx_seed=0;idx_seed<4;idx_seed++) {qdp_rng_seed.elem(idx_seed)=rand();}
+				for (int idx_seed=0;idx_seed<4;idx_seed++) {qdp_rng_seed.elem().elem().elem(idx_seed)=rand();}
 				QDP::RNG::setrn(qdp_rng_seed);
 				theta = twopiN * floor(4*rnd1);
 				c = cmplx(cos(theta),sin(theta));
