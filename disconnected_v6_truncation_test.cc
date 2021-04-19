@@ -1411,9 +1411,10 @@ int main(int argc, char **argv) {
 				  for(int color_index= 0; color_index < Nc; ++color_index)
 				  {
 				random(rnd1);
+/* Tests for random numbers, print the Z4 random number at different sites for comparison.
 				QDPIO::cout << "Test random seed"
 									  << std::endl;
-				for(int n=0;n<3;n++){
+				for(int n=0;n<1;n++){
 					  QDPIO::cout << "Random number "<< n <<": " << std::endl;
 				multi1d<int> coord(4);
 				for(int i=0;i<4;i++){
@@ -1429,6 +1430,7 @@ int main(int argc, char **argv) {
 					  QDPIO::cout <<"): "<< peekSite(rnd1,coord) <<std::endl;
 				}
 				}
+ */
 				for (int idx_seed=0;idx_seed<4;idx_seed++) {qdp_rng_seed.elem().elem().elem(idx_seed)=rand();}
 				QDP::RNG::setrn(qdp_rng_seed);
 				theta = twopiN * floor(4*rnd1);
