@@ -1126,9 +1126,8 @@ int main(int argc, char **argv) {
 	
 	// Initialize the RNG seed
 	srand(input.rng_seed);
-	multi1d<int> qdp_rng_seed_init(4);
-	for(int i=0;i<4;i++) qdp_rng_seed_init[i]=rand();
-	QDP::Seed qdp_rng_seed(qdp_rng_seed_init);
+	QDP::Seed qdp_rng_seed;
+	for(int idx_seed=0;idx_seed<4;idx_seed++) qdp_rng_seed.elem(idx_seed)=rand();
 	QDP::RNG::setrn(qdp_rng_seed); // initialize a qdp seed
 	write(xml_out, "RNG", input.rng_seed);
 	
