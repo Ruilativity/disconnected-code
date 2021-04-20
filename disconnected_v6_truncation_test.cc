@@ -406,7 +406,7 @@ void checkout(int Nr_LP, int Nr_HP, multi4d<Complex> &TrM_inv, std::string out_f
 				sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
 						lp_idx,link_patterns[d] , g,
 						TrM_inv[lp_idx][d][p][g].elem().elem().elem().real(),
-						TrM_inv[lp_idx][d][p][g].elem().elem().elem().imag(),
+						TrM_inv[lp_idx][d][p][g].elem().elem().elem().imag()
 						);
 				std::string oline(buffer);
 				fout << oline;
@@ -573,6 +573,7 @@ int main(int argc, char **argv) {
 	QDP::RNG::setrn(qdp_rng_seed); // initialize a qdp seed
 	write(xml_out, "RNG", input.rng_seed);
 	
+	int t_src = input.param.noise_src.t_src;
 	// Initialize stop watch
 	StopWatch swatch;
 	
@@ -595,9 +596,11 @@ int main(int argc, char **argv) {
 																				 input.cfg.path));
 		(*gaugeInit)(gauge_file_xml, gauge_xml, U);
 		U_tmp=U;
-		for(int t_shift=0;t_shift<input.t_src,t_shift++){
-			U=shift(U_tmp, BACKWARD, Nd-1);// shift the whole lattice so that the source is located at t=0.
-			U_tmp=U;
+		for(int t_shift=0;t_shift<t_src;t_shift++){
+			for(int mu=0;mu<Nd-1;mu++){
+			U[mu]=shift(U_tmp[mu], BACKWARD, Nd-1);// shift the whole lattice so that the source is located at t=0.
+			U_tmp[mu]=U[mu];
+			}
 		}
 	} catch (std::bad_cast) {
 		QDPIO::cerr << "DISCO: caught cast error" << std::endl;
@@ -655,7 +658,6 @@ int main(int argc, char **argv) {
 	double restart_factor = input.param.noise_src.restart_factor;
 	
 	QDPIO::cout << "Calculate disconnected contribution on timeslice = 0";
-	int t_src = input.param.noise_src.t_src;
 	
 	int num_checkp = input.param.checkpoint.size();
 	std::vector<Checkpoint_t> checkp;
@@ -971,14 +973,6 @@ int main(int argc, char **argv) {
 							case 1:
 								if (count_lp >= next_checkpoint) chkout = true;
 								break;
-								
-							case 2:
-								if (next_checkpoint > s_err_max) chkout = true;
-								break;
-								
-							case 3:
-								if (next_checkpoint > s_err_av) chkout = true;
-								break;
 						}  // switch(checkp[idx_cp].version)
 						
 						// If it reaches to the Maximum iterations, checkout
@@ -990,7 +984,7 @@ int main(int argc, char **argv) {
 						if (chkout) {
 							// checkout
 							checkout(count_lp, count_hp, TrM_inv, checkp[idx_cp].OutFileName,link_dirs,link_max,
-									 timeslices, checkp[idx_cp].chkout_order, Restarted,phases);
+									  checkp[idx_cp].chkout_order, Restarted,phases);
 							checkp[idx_cp].chkout_order++;
 							
 							// remove the passed checkpoint (the largest checkout accuracy)
