@@ -344,32 +344,24 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 //====================================================================
 // Calculate statistical error, and save results
 //====================================================================
-void checkout(int Nr_LP, int Nr_HP, multi4d<Complex> &TrM_inv, std::string out_fname, std::vector<int> &link_dirs, int link_max,int chkout_order, bool Restarted, multi1d<SftMom*> &phases) {
+void checkout(int Nr_LP, int Nr_HP, multi4d<Complex> &TrM_inv, std::string out_fname, std::vector<int> &link_dirs, int link_max,int chkout_order, bool Restarted, SftMom* &phases) {
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int NumDisp = link_patterns.size();
 	int NumDisp_mom;
 	if(link_max>2) NumDisp_mom= pow(8,2)+1;
 	else NumDisp_mom= pow(link_dirs.size(),link_max)+1;
-	multi1d<int> NumMom(NumDisp);
-	multi1d<multi2d<int>> mom_list(4);
-	for(int i=0;i<4;++i){
-		mom_list[i].resize(phases[i]->numMom(),3);
-		for(int p=0; p<phases[i]->numMom(); ++p) {
-			multi1d<int> pp = phases[i]->numToMom(p);
-			mom_list[i][p][0]=pp[0];
-			mom_list[i][p][1]=pp[1];
-			mom_list[i][p][2]=pp[2];
-		}
+	int NumMom;
+	NumMom=phases->numMom();
+	multi2d<int> mom_list(NumMom,3);
+	for(int p=0; p<NumMom; ++p) {
+		multi1d<int> pp = phases->numToMom(p);
+		mom_list[p][0]=pp[0];
+		mom_list[p][1]=pp[1];
+		mom_list[p][2]=pp[2];
 	}
 	
 	
-	for(int d=0;d< NumDisp;d++){
-		if(d==0) NumMom[d]=phases[0]->numMom();
-		else if(d <NumDisp_mom && link_patterns[d] < 100) NumMom[d]=phases[1]->numMom();
-		else if(d <NumDisp_mom && link_patterns[d] > 100) NumMom[d]=phases[2]->numMom();
-		else NumMom[d]=phases[3]->numMom();
-	}
 	
 
 
@@ -385,12 +377,12 @@ void checkout(int Nr_LP, int Nr_HP, multi4d<Complex> &TrM_inv, std::string out_f
 	// Save results
 	//-----------------------------
 
-	for (int p = 0; p < phases[0]->numMom(); ++p){
+	for (int p = 0; p < NumMom; ++p){
 		char buffer[250];
 		if (chkout_order == -1){  // -1 means that this checkout is the final
-			sprintf(buffer, "%s_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[0][p][0],mom_list[0][p][1],mom_list[0][p][2]);
+			sprintf(buffer, "%s_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2]);
 		} else{
-			sprintf(buffer, "%s_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[0][p][0],mom_list[0][p][1],mom_list[0][p][2], chkout_order);
+			sprintf(buffer, "%s_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[p][0],mom_list[p][1],mom_list[p][2], chkout_order);
 		}
 		
 		std::string out_fname_c(buffer);
@@ -692,7 +684,7 @@ int main(int argc, char **argv) {
 	int NumDisp_mom;
 	if(link_max>2) NumDisp_mom= pow(8,2)+1;
 	else NumDisp_mom= pow(link_dirs.size(),link_max)+1;
-	multi1d<SftMom*> phases(4);
+	SftMom* phases;
 	
 	
 	
@@ -710,17 +702,8 @@ int main(int argc, char **argv) {
 	
 	
 	
-	phases[0]=new SftMom(input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
-	phases[1]=new SftMom(input.param.mom2_list_1st_mom, origin_offs, mom_offset, false, j_decay);
-	phases[2]=new SftMom(input.param.mom2_list_2nd_mom, origin_offs, mom_offset, false, j_decay);
-	phases[3]=new SftMom(input.param.mom2_list_lamet, origin_offs, mom_offset, false, j_decay);
-	multi1d<int> NumMom(NumDisp);
-	for (int d=0;d<NumDisp;++d){
-		if (d==0) NumMom[d]=phases[0]->numMom();
-		else if (d<NumDisp_mom && link_patterns[d]<100) NumMom[d]=phases[1]->numMom();
-		else if (d<NumDisp_mom && link_patterns[d]>100) NumMom[d]=phases[2]->numMom();
-		else NumMom[d]=phases[3]->numMom();
-	}
+	phases=new SftMom(input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
+	int NumMom=phases->numMom();
 	
 	// Noise source (eta) and Solution (psi)
 	LatticeFermion eta, psi;
@@ -818,7 +801,7 @@ int main(int argc, char **argv) {
 		// by using low precision calculation
 		//--------------------------------------------------------------------
 		
-		int count_hp = 0;
+		
 		for (int count_lp = 1; count_lp <= Max_Nr_LP; ++count_lp) {
 			swatch.reset();
 			swatch.start();
@@ -917,12 +900,8 @@ int main(int argc, char **argv) {
 				
 				for (int g = 0; g < NUM_G; ++g) {
 					corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
-					
-					if (d==0) corr_fn_t = phases[0]->sft(corr_fn);
-					else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1]->sft(corr_fn);
-					else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2]->sft(corr_fn);
-					else corr_fn_t = phases[3]->sft(corr_fn);
-					for (int p=0; p<NumMom[d]; ++p){
+					corr_fn_t = phases->sft(corr_fn);
+					for (int p=0; p<NumMom; ++p){
 						TrM_inv[count_lp][d][p][g] = corr_fn_t[p][0];
 						
 						// For scalar case, HPE should correct Tr(2 kappa I) = 24*kappa*L^3
@@ -1019,8 +998,7 @@ int main(int argc, char **argv) {
 		QDP_abort(1);
 	}
 	
-	for (int i=0;i<4;i++)
-		delete phases[i];
+	delete phases;
 	
 	//-----------------------------
 	// End program
