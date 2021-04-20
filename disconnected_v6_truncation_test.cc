@@ -82,8 +82,7 @@ struct NoiseSource_t {
 	
 	int Nr_LPHP_ratio;
 	
-	bool dilute;
-	multi1d<int> timeslices;
+	int t_src;
 	
 	std::string NoiseSrcType;
 	
@@ -218,13 +217,8 @@ void read(XMLReader& xml, const std::string& path, NoiseSource_t& p) {
 	
 	read(paramtop, "NrLPHP_RATIO", p.Nr_LPHP_ratio);
 	
-	// Read Dilution information
-	if (paramtop.count("Dilution") > 0) {
-		p.dilute = true;
-		read(paramtop, "Dilution/Timeslice", p.timeslices);
-	} else {
-		p.dilute = false;
-	}
+	// Read time source location
+	read(paramtop, "t_src", p.t_src);
 	
 	// Read noise source type
 	if (paramtop.count("NoiseSrcType") > 0) {
@@ -316,142 +310,6 @@ bool linkageHack(void) {
 	return success;
 }
 
-//====================================================================
-// Structures for error analysis
-//====================================================================
-struct ErrAnlyVars {
-	multi1d<multi3d<DComplex>> TrM_inv_sum_LP;
-	multi1d<multi3d<DComplex>> TrM_inv_sum_C;
-	multi1d<multi3d<double>> TrM_inv_LP_sqsum_r;
-	multi1d<multi3d<double>> TrM_inv_LP_sqsum_i;
-	multi1d<multi3d<double>> TrM_inv_C_sqsum_r;
-	multi1d<multi3d<double>> TrM_inv_C_sqsum_i;
-	
-#ifdef CALC_ERR_ERR
-	multi1d<multi3d<std::vector<DComplex>>> TrM_inv_est;
-#endif
-	
-	ErrAnlyVars() {
-	}
-	
-	ErrAnlyVars(int NumDisp, multi1d<int> &NumMom, int NumTs) {
-		TrM_inv_sum_LP.resize(NumDisp);
-		TrM_inv_sum_C.resize(NumDisp);
-		TrM_inv_LP_sqsum_r.resize(NumDisp);
-		TrM_inv_LP_sqsum_i.resize(NumDisp);
-		TrM_inv_C_sqsum_r.resize(NumDisp);
-		TrM_inv_C_sqsum_i.resize(NumDisp);
-		for(int d=0;d<NumDisp;++d){
-			TrM_inv_sum_LP[d].resize( NumMom[d], NUM_G, NumTs);
-			TrM_inv_sum_C[d].resize( NumMom[d], NUM_G, NumTs);
-			TrM_inv_LP_sqsum_r[d].resize( NumMom[d], NUM_G, NumTs);
-			TrM_inv_LP_sqsum_i[d].resize( NumMom[d], NUM_G, NumTs);
-			TrM_inv_C_sqsum_r[d].resize( NumMom[d], NUM_G, NumTs);
-			TrM_inv_C_sqsum_i[d].resize( NumMom[d], NUM_G, NumTs);
-		}
-		
-		
-#ifdef CALC_ERR_ERR
-		TrM_inv_est.resize(NumDisp);
-		for(int i=0;d<NumDisp;++i){
-			TrM_inv_est[d].resize(NumMom[d], NUM_G, NumTs);
-		}
-#endif
-		
-		for (int d = 0; d < NumDisp; ++d)
-			for (int p = 0; p < NumMom[d]; ++p)
-			for (int i = 0; i < NUM_G; ++i)
-				for (int t = 0; t < NumTs; ++t) {
-					TrM_inv_sum_LP[d][p][i][t] = zero;
-					TrM_inv_sum_C[d][p][i][t] = zero;
-					
-					TrM_inv_LP_sqsum_r[d][p][i][t] = 0.0;
-					TrM_inv_LP_sqsum_i[d][p][i][t] = 0.0;
-					TrM_inv_C_sqsum_r[d][p][i][t] = 0.0;
-					TrM_inv_C_sqsum_i[d][p][i][t] = 0.0;
-				}
-	}
-};
-
-//====================================================================
-// Calculate statistical error of scalar channel
-// and return maximum/average error among timeslices
-//====================================================================
-void check_acc(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::vector<int> &timeslices, double &ratio_C_LP_err, double &m_err_max, double &m_err_av) {
-	int NumTs = timeslices.size();
-	int d = 0; // no displacement
-	int p = 0; // 0 momentum transfer
-	int g = 0; // scalar
-	
-	// TSM estimate of Tr [ M^{-1} \gamma ]
-	multi1d<DComplex> TrM_inv_av(NumTs);
-	
-	// Low precision estimate and correction to Tr [ G^{-1} \Gamma ]
-	multi1d<DComplex> TrM_inv_av_LP(NumTs);
-	multi1d<DComplex> TrM_inv_av_C(NumTs);
-	
-	// Calculate average
-	if (Nr_LP != 0) for (int t = 0; t < NumTs; ++t)
-		TrM_inv_av_LP[t] = errAnly.TrM_inv_sum_LP[d][p][g][t] / (double)Nr_LP;
-	else for (int t = 0; t < NumTs; ++t)
-                TrM_inv_av_LP[t] =0.0;	
-	if (Nr_HP != 0) for (int t = 0; t < NumTs; ++t)
-		TrM_inv_av_C[t] = errAnly.TrM_inv_sum_C[d][p][g][t] / (double)Nr_HP;
-	else for (int t = 0; t < NumTs; ++t)
-                TrM_inv_av_C[t] =0.0;
-	//-----------------------------
-	// Calculate statistical error
-	//-----------------------------
-	std::vector<double> TrM_inv_LP_err_r(NumTs);
-	std::vector<double> TrM_inv_C_err_r(NumTs);
-	std::vector<double> TrM_inv_err_r(NumTs);
-	
-	double TrM_inv_err_r_av = 0.0;
-	
-	for (int t = 0; t < NumTs; ++t) {
-		if (Nr_LP > 1) {
-			double TrM_inv_av_LP_sq_r = pow(
-											(double)TrM_inv_av_LP[t].elem().elem().elem().real(), 2);
-			TrM_inv_LP_err_r[t] = sqrt(
-									   (errAnly.TrM_inv_LP_sqsum_r[d][p][g][t] / Nr_LP - TrM_inv_av_LP_sq_r) / (Nr_LP
-																											 - 1.0));
-		} else {
-			TrM_inv_LP_err_r[t] = 0.0;
-		}
-		
-		if (Nr_HP > 1) {
-			double TrM_inv_av_C_sq_r = pow(
-										   TrM_inv_av_C[t].elem().elem().elem().real(), 2);
-			TrM_inv_C_err_r[t] = sqrt(
-									  (errAnly.TrM_inv_C_sqsum_r[d][p][g][t] / Nr_HP - TrM_inv_av_C_sq_r) / (Nr_HP
-																										  - 1.0));
-		} else {
-			TrM_inv_C_err_r[t] = 0.0;
-		}
-		
-		TrM_inv_err_r[t] = sqrt(
-								pow(TrM_inv_LP_err_r[t], 2) + pow(TrM_inv_C_err_r[t], 2));
-		TrM_inv_err_r_av += TrM_inv_err_r[t] / (double)NumTs;
-	}  // for (int t=0; t<NumTs; ++t)
-	
-	// Find maximum error among all timeslices; C++11
-	double max_LP_err = *std::max_element(TrM_inv_LP_err_r.begin(),
-										  TrM_inv_LP_err_r.end());
-	double max_C_err = *std::max_element(TrM_inv_C_err_r.begin(),
-										 TrM_inv_C_err_r.end());
-	double max_err = *std::max_element(TrM_inv_err_r.begin(),
-									   TrM_inv_err_r.end());
-	
-	// Calculate ratio between error of correction term and error of LP term;
-	// this will be used for the restart criterion
-	if (max_LP_err != 0) ratio_C_LP_err = max_C_err / max_LP_err;
-	
-	m_err_max = max_err;
-	m_err_av = TrM_inv_err_r_av;
-	
-	return;
-}
-
 void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, int link_max){
 	link_patterns.push_back(0);
 	if(link_max==1)
@@ -486,8 +344,7 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 //====================================================================
 // Calculate statistical error, and save results
 //====================================================================
-void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname, std::vector<int> &link_dirs, int link_max, std::vector<int> &timeslices, int chkout_order, bool Restarted, multi1d<SftMom*> &phases) {
-	int NumTs = timeslices.size();
+void checkout(int Nr_LP, int Nr_HP, multi4d<Complex> &TrM_inv, std::string out_fname, std::vector<int> &link_dirs, int link_max,int chkout_order, bool Restarted, multi1d<SftMom*> &phases) {
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int NumDisp = link_patterns.size();
@@ -514,207 +371,15 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 		else NumMom[d]=phases[3]->numMom();
 	}
 	
-	
-	
-	
-	// TSM estimate of Tr [ M^{-1} \gamma ]
-	multi1d<multi3d<DComplex>> TrM_inv_av(NumDisp);
-	
-	// Low precision estimate and correction to Tr [ G^{-1} \Gamma ]
-	multi1d<multi3d<DComplex>> TrM_inv_av_LP(NumDisp);
-	multi1d<multi3d<DComplex>> TrM_inv_av_C(NumDisp);
-	
-	for(int d=0;d< NumDisp;d++){
-		TrM_inv_av[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_av_LP[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_av_C[d].resize(NumMom[d], NUM_G, NumTs);
-	}
-	
-	// Calculate average
-	if (Nr_LP != 0) for (int d = 0; d < NumDisp; ++d)
-		for (int p = 0; p < NumMom[d]; ++p)
-		for (int g = 0; g < NUM_G; ++g)
-			for (int t = 0; t < NumTs; ++t)
-				TrM_inv_av_LP[d][p][g][t] = errAnly.TrM_inv_sum_LP[d][p][g][t] / (double)Nr_LP;
-	else for (int d = 0; d < NumDisp; ++d)
-                for (int p = 0; p < NumMom[d]; ++p)
-                for (int g = 0; g < NUM_G; ++g)
-                        for (int t = 0; t < NumTs; ++t)
-                                TrM_inv_av_LP[d][p][g][t] =0.0;	
-	if (Nr_HP != 0) for (int d = 0; d < NumDisp; ++d)
-		for (int p = 0; p < NumMom[d]; ++p)
-		for (int g = 0; g < NUM_G; ++g)
-			for (int t = 0; t < NumTs; ++t)
-				TrM_inv_av_C[d][p][g][t] = errAnly.TrM_inv_sum_C[d][p][g][t] / (double)Nr_HP;
-	else for (int d = 0; d < NumDisp; ++d)
-                for (int p = 0; p < NumMom[d]; ++p)
-                for (int g = 0; g < NUM_G; ++g)
-                        for (int t = 0; t < NumTs; ++t)
-                                TrM_inv_av_C[d][p][g][t] =0.0;
-	//-----------------------------
-	// Calculate statistical error
-	//-----------------------------
-	multi1d<multi3d<double>> TrM_inv_LP_err_r(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_LP_err_i(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_C_err_r(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_C_err_i(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_err_r(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_err_i(NumDisp);
-	
-	for(int d=0;d< NumDisp;d++){
-		TrM_inv_LP_err_r[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_LP_err_i[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_C_err_r[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_C_err_i[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_err_r[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_err_i[d].resize(NumMom[d], NUM_G, NumTs);
-		
-	}
-	
-	for (int d = 0; d < NumDisp; ++d)
-		for (int p = 0; p < NumMom[d]; ++p)
-		for (int g = 0; g < NUM_G; ++g)
-			for (int t = 0; t < NumTs; ++t) {
-				if (Nr_LP > 1) {
-					double TrM_inv_av_LP_sq_r = pow(
-													(double)TrM_inv_av_LP[d][p][g][t].elem().elem().elem().real(), 2);
-					double TrM_inv_av_LP_sq_i = pow(
-													(double)TrM_inv_av_LP[d][p][g][t].elem().elem().elem().imag(), 2);
-					TrM_inv_LP_err_r[d][p][g][t] =
-					sqrt(
-						 (errAnly.TrM_inv_LP_sqsum_r[d][p][g][t] / Nr_LP - TrM_inv_av_LP_sq_r) / (Nr_LP
-																							   - 1.0));
-					TrM_inv_LP_err_i[d][p][g][t] =
-					sqrt(
-						 (errAnly.TrM_inv_LP_sqsum_i[d][p][g][t] / Nr_LP - TrM_inv_av_LP_sq_i) / (Nr_LP
-																							   - 1.0));
-				} else {
-					TrM_inv_LP_err_r[d][p][g][t] = 0.0;
-					TrM_inv_LP_err_i[d][p][g][t] = 0.0;
-				}
-				
-				if (Nr_HP > 1) {
-					double TrM_inv_av_C_sq_r = pow(
-												   TrM_inv_av_C[d][p][g][t].elem().elem().elem().real(), 2);
-					double TrM_inv_av_C_sq_i = pow(
-												   TrM_inv_av_C[d][p][g][t].elem().elem().elem().imag(), 2);
-					TrM_inv_C_err_r[d][p][g][t] =
-					sqrt(
-						 (errAnly.TrM_inv_C_sqsum_r[d][p][g][t] / Nr_HP - TrM_inv_av_C_sq_r) / (Nr_HP
-																							 - 1.0));
-					TrM_inv_C_err_i[d][p][g][t] =
-					sqrt(
-						 (errAnly.TrM_inv_C_sqsum_i[d][p][g][t] / Nr_HP - TrM_inv_av_C_sq_i) / (Nr_HP
-																							 - 1.0));
-				} else {
-					TrM_inv_C_err_r[d][p][g][t] = 0.0;
-					TrM_inv_C_err_i[d][p][g][t] = 0.0;
-				}
-				
-				TrM_inv_err_r[d][p][g][t] = sqrt(
-											  pow(TrM_inv_LP_err_r[d][p][g][t], 2) + pow(TrM_inv_C_err_r[d][p][g][t], 2));
-				TrM_inv_err_i[d][p][g][t] = sqrt(
-											  pow(TrM_inv_LP_err_i[d][p][g][t], 2) + pow(TrM_inv_C_err_i[d][p][g][t], 2));
-			}  // for (int d = 0; d < NumDisp; ++d), for (int g=0; g<NUM_G; ++g), for (int t=0; t<NumTs; ++t)
-	
+
+
 	//------------------------------------------
-	// Print LP estimate and correction term
+	// Print all LP measurements
 	//------------------------------------------
-	if (chkout_order == -1)  // -1 means final checkout
-		QDPIO::cout << std::endl << "Checkout - fn; " << out_fname << std::endl;
-	else
-		QDPIO::cout << std::endl << "Checkout - " << chkout_order << "; "
-		<< out_fname << std::endl;
 	
-	QDPIO::cout << std::endl;
+	QDPIO::cout << std::endl << "Checkout - fn; " << out_fname << std::endl;
 	
 
-	
-	//--------------------------------------------------------------------
-	// Calculate TSM estimate of TrM_inv
-	//--------------------------------------------------------------------
-	for (int d = 0; d < NumDisp; ++d)
-		for (int p = 0; p < NumMom[d]; ++p)
-		for (int g = 0; g < NUM_G; ++g)
-			for (int t = 0; t < NumTs; ++t)
-				TrM_inv_av[d][p][g][t] = TrM_inv_av_LP[d][p][g][t] + TrM_inv_av_C[d][p][g][t];
-	
-	//--------------------------------------------------------------------
-	// Calculate Another estimate of total error and error of error
-	//--------------------------------------------------------------------
-#ifdef CALC_ERR_ERR
-	multi1d<multi3d<double>> TrM_inv_est_av_r(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_est_av_i(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_est_err_r(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_est_err_i(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_est_err_err_r(NumDisp);
-	multi1d<multi3d<double>> TrM_inv_est_err_err_i(NumDisp);
-	
-	for(int d=0;d< NumDisp;d++){
-		TrM_inv_est_av_r[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_est_av_i[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_est_err_r[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_est_err_i[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_est_err_err_r[d].resize(NumMom[d], NUM_G, NumTs);
-		TrM_inv_est_err_err_i[d].resize(NumMom[d], NUM_G, NumTs);
-		
-	}
-	
-	for (int d = 0; d < NumDisp; ++d)
-		for (int p = 0; p < NumMom[d]; ++p)
-		for (int g=0; g<NUM_G; ++g)
-			for (int t=0; t<NumTs; ++t) {
-				TrM_inv_est_av_r[d][p][g][t] = 0.0;
-				TrM_inv_est_av_i[d][p][g][t] = 0.0;
-				
-				int N_e = errAnly.TrM_inv_est[d][p][g][t].size();
-				
-				// Calculate average
-				double tmp_av_r = 0.0;
-				double tmp_av_i = 0.0;
-				for (int i=0; i<N_e; ++i) {
-					tmp_av_r += errAnly.TrM_inv_est[d][p][g][t][i].elem().elem().elem().real();
-					tmp_av_i += errAnly.TrM_inv_est[d][p][g][t][i].elem().elem().elem().imag();
-				}
-				tmp_av_r /= N_e;
-				tmp_av_i /= N_e;
-				
-				TrM_inv_est_av_r[d][p][g][t] = tmp_av_r;
-				TrM_inv_est_av_i[d][p][g][t] = tmp_av_i;
-				
-				// Calculate error and error of error
-				double tmp_p2sum_r = 0.0;
-				double tmp_p2sum_i = 0.0;
-				double tmp_p4sum_r = 0.0;
-				double tmp_p4sum_i = 0.0;
-				
-				for (int i=0; i<N_e; ++i) {
-					double m_r = errAnly.TrM_inv_est[d][p][g][t][i].elem().elem().elem().real();
-					double m_i = errAnly.TrM_inv_est[d][p][g][t][i].elem().elem().elem().imag();
-					tmp_p2sum_r += POW2(m_r - tmp_av_r);
-					tmp_p2sum_i += POW2(m_i - tmp_av_i);
-					tmp_p4sum_r += POW4(m_r - tmp_av_r);
-					tmp_p4sum_i += POW4(m_i - tmp_av_i);
-				}
-				
-				// error
-				double tmp_err_r = sqrt(tmp_p2sum_r / (N_e*(N_e-1.0)));
-				double tmp_err_i = sqrt(tmp_p2sum_i / (N_e*(N_e-1.0)));
-				
-				TrM_inv_est_err_r[d][p][g][t] = tmp_err_r;
-				TrM_inv_est_err_i[d][p][g][t] = tmp_err_i;
-				
-				// error of error
-				double tmp_err_var_r = sqrt( tmp_p4sum_r/(N_e*POW3(N_e-1.0)) - POW4(tmp_err_r)/(N_e-1.0) );
-				double tmp_err_var_i = sqrt( tmp_p4sum_i/(N_e*POW3(N_e-1.0)) - POW4(tmp_err_i)/(N_e-1.0) );
-				TrM_inv_est_err_err_r[d][p][g][t] = tmp_err_var_r / (2*tmp_err_r);
-				TrM_inv_est_err_err_i[d][p][g][t] = tmp_err_var_i / (2*tmp_err_i);
-			}  // Loop over d, g and t
-#endif  // End of CALC_ERR_ERR
-	
-	//-----------------------------
-	// Print results
-	//-----------------------------
 
 	//-----------------------------
 	// Save results
@@ -723,259 +388,36 @@ void checkout(int Nr_LP, int Nr_HP, ErrAnlyVars &errAnly, std::string out_fname,
 	for (int p = 0; p < phases[0]->numMom(); ++p){
 		char buffer[250];
 		if (chkout_order == -1){  // -1 means that this checkout is the final
-			sprintf(buffer, "%s_local_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[0][p][0],mom_list[0][p][1],mom_list[0][p][2]);
+			sprintf(buffer, "%s_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[0][p][0],mom_list[0][p][1],mom_list[0][p][2]);
 		} else{
-			sprintf(buffer, "%s_local_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[0][p][0],mom_list[0][p][1],mom_list[0][p][2], chkout_order);
+			sprintf(buffer, "%s_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[0][p][0],mom_list[0][p][1],mom_list[0][p][2], chkout_order);
 		}
 		
 		std::string out_fname_c(buffer);
 		
 		//write moment into file
 		TextFileWriter fout(out_fname_c);
-	for (int d = 0; d < 1; ++d) {
-		for (int t = 0; t < NumTs; ++t) {
-			
-#ifdef CALC_ERR_ERR
-			fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
-			
-			for (int g=0; g<NUM_G; ++g) {
-				char buffer[250];
-				sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
-						link_patterns[d],
-						timeslices[t],
-						g,
-						TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
-						TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
-						TrM_inv_err_r[d][p][g][t],
-						TrM_inv_err_i[d][p][g][t],
-						TrM_inv_est_err_err_r[d][p][g][t],
-						TrM_inv_est_err_err_i[d][p][g][t]);
-				std::string oline(buffer);
-				fout << oline;
-			}  // for (int g=0; g<NUM_G; ++g)
-#else
-			fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
-			<< "\n";
-			
+		fout << "#LP_idx d g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im "
+		<< "\n";
+		for (int lp_idx = 0; lp_idx < Nr_LP; ++lp_idx) {
+			for (int d = 0; d < NumDisp_mom; ++d) {
 			for (int g = 0; g < NUM_G; ++g) {
 				char buffer[250];
 				sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
-						link_patterns[d] , timeslices[t], g,
-						TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
-						TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
-						TrM_inv_err_r[d][p][g][t], TrM_inv_err_i[d][p][g][t]);
+						lp_idx,link_patterns[d] , g,
+						TrM_inv[lp_idx][d][p][g].elem().elem().elem().real(),
+						TrM_inv[lp_idx][d][p][g].elem().elem().elem().imag(),
+						);
 				std::string oline(buffer);
 				fout << oline;
 			}  // for (int g=0; g<NUM_G; ++g)
-#endif
+
 			
-		}  // for (int t=0; t<NumTs; ++t)
-		}// for disp
+		}  // for (int d = 0; d < 1; ++d)
+		}// for LP
 		fout.close();
 	}  //for (int p = 0; p < NumMom; ++p)
-	
-	
-	if(link_max>0) for (int p = 0; p < phases[1]->numMom(); ++p){
-			char buffer[250];
-			if (chkout_order == -1){  // -1 means that this checkout is the final
-				sprintf(buffer, "%s_1st_mom_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[1][p][0],mom_list[1][p][1],mom_list[1][p][2]);
-			} else{
-				sprintf(buffer, "%s_1st_mom_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[1][p][0],mom_list[1][p][1],mom_list[1][p][2], chkout_order);
-			}
-			
-			std::string out_fname_c(buffer);
-			
-			//write moment into file
-			TextFileWriter fout(out_fname_c);
-		for (int d = 1; d < NumDisp_mom; ++d) {
-			if (link_patterns[d]>100) continue;
-			for (int t = 0; t < NumTs; ++t) {
-				
-	#ifdef CALC_ERR_ERR
-				fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
-				
-				for (int g=0; g<NUM_G; ++g) {
-					char buffer[250];
-					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
-							link_patterns[d],
-							timeslices[t],
-							g,
-							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
-							TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
-							TrM_inv_err_r[d][p][g][t],
-							TrM_inv_err_i[d][p][g][t],
-							TrM_inv_est_err_err_r[d][p][g][t],
-							TrM_inv_est_err_err_i[d][p][g][t]);
-					std::string oline(buffer);
-					fout << oline;
-				}  // for (int g=0; g<NUM_G; ++g)
-	#else
-				fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
-				<< "\n";
-				
-				for (int g = 0; g < NUM_G; ++g) {
-					char buffer[250];
-					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
-							link_patterns[d] , timeslices[t], g,
-							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
-							TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
-							TrM_inv_err_r[d][p][g][t], TrM_inv_err_i[d][p][g][t]);
-					std::string oline(buffer);
-					fout << oline;
-				}  // for (int g=0; g<NUM_G; ++g)
-	#endif
-				
-			}  // for (int t=0; t<NumTs; ++t)
-			}// for disp
-			fout.close();
-		}  //for (int p = 0; p < NumMom; ++p)
-	
-	if(link_max>1) for (int p = 0; p < phases[2]->numMom(); ++p){
-			char buffer[250];
-			if (chkout_order == -1){  // -1 means that this checkout is the final
-				sprintf(buffer, "%s_2nd_mom_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[2][p][0],mom_list[2][p][1],mom_list[2][p][2]);
-			} else{
-				sprintf(buffer, "%s_2nd_mom_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[2][p][0],mom_list[2][p][1],mom_list[2][p][2], chkout_order);
-			}
-			
-			std::string out_fname_c(buffer);
-			
-			//write moment into file
-			TextFileWriter fout(out_fname_c);
-		for (int d = 1; d < NumDisp_mom; ++d) {
-			if (link_patterns[d]<100) continue;
-			for (int t = 0; t < NumTs; ++t) {
-				
-	#ifdef CALC_ERR_ERR
-				fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
-				
-				for (int g=0; g<NUM_G; ++g) {
-					char buffer[250];
-					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
-							link_patterns[d],
-							timeslices[t],
-							g,
-							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
-							TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
-							TrM_inv_err_r[d][p][g][t],
-							TrM_inv_err_i[d][p][g][t],
-							TrM_inv_est_err_err_r[d][p][g][t],
-							TrM_inv_est_err_err_i[d][p][g][t]);
-					std::string oline(buffer);
-					fout << oline;
-				}  // for (int g=0; g<NUM_G; ++g)
-	#else
-				fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
-				<< "\n";
-				
-				for (int g = 0; g < NUM_G; ++g) {
-					char buffer[250];
-					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
-							link_patterns[d] , timeslices[t], g,
-							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
-							TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
-							TrM_inv_err_r[d][p][g][t], TrM_inv_err_i[d][p][g][t]);
-					std::string oline(buffer);
-					fout << oline;
-				}  // for (int g=0; g<NUM_G; ++g)
-	#endif
-				
-			}  // for (int t=0; t<NumTs; ++t)
-			}// for disp
-			fout.close();
-		}  //for (int p = 0; p < NumMom; ++p)
-	
-	if(link_max>2) for (int p = 0; p < phases[3]->numMom(); ++p){
-			char buffer[250];
-			if (chkout_order == -1){  // -1 means that this checkout is the final
-				sprintf(buffer, "%s_lamet_qx%d_qy%d_qz%d_fn", out_fname.c_str(),mom_list[3][p][0],mom_list[3][p][1],mom_list[3][p][2]);
-			} else{
-				sprintf(buffer, "%s_lamet_qx%d_qy%d_qz%d_%02d", out_fname.c_str(),mom_list[3][p][0],mom_list[3][p][1],mom_list[3][p][2], chkout_order);
-			}
-			
-			std::string out_fname_c(buffer);
-			
-			//write moment into file
-			TextFileWriter fout(out_fname_c);
-		for (int d = NumDisp_mom; d < NumDisp; ++d) {
-			for (int t = 0; t < NumTs; ++t) {
-				
-	#ifdef CALC_ERR_ERR
-				fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im       StatErrErr_re      StatErrErr_im" << "\n";
-				
-				for (int g=0; g<NUM_G; ++g) {
-					char buffer[250];
-					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
-							link_patterns[d],
-							timeslices[t],
-							g,
-							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
-							TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
-							TrM_inv_err_r[d][p][g][t],
-							TrM_inv_err_i[d][p][g][t],
-							TrM_inv_est_err_err_r[d][p][g][t],
-							TrM_inv_est_err_err_i[d][p][g][t]);
-					std::string oline(buffer);
-					fout << oline;
-				}  // for (int g=0; g<NUM_G; ++g)
-	#else
-				fout << "#d t   g  Tr[M^-1 g_i]_re  Tr[M^-1 g_i]_im   StatErr_re      StatErr_im"
-				<< "\n";
-				
-				for (int g = 0; g < NUM_G; ++g) {
-					char buffer[250];
-					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
-							link_patterns[d] , timeslices[t], g,
-							TrM_inv_av[d][p][g][t].elem().elem().elem().real(),
-							TrM_inv_av[d][p][g][t].elem().elem().elem().imag(),
-							TrM_inv_err_r[d][p][g][t], TrM_inv_err_i[d][p][g][t]);
-					std::string oline(buffer);
-					fout << oline;
-				}  // for (int g=0; g<NUM_G; ++g)
-	#endif
-				
-			}  // for (int t=0; t<NumTs; ++t)
-			}// for disp
-			fout.close();
-		}  //for (int p = 0; p < NumMom; ++p)
-	
-//	// write the LP and Correction into separate files.
-//		TextFileWriter fout_cr(out_fname_cr_c);
-//
-//		for (int d = 0; d < NumDisp_mom; ++d) {
-//
-//			for (int t = 0; t < NumTs; ++t) {
-//
-//
-//				fout_cr << "# d t   g  Tr[M^-1 g_i]_LP_re  Tr[M^-1 g_i]_LP_im   StatErr_re      StatErr_im       Correction_re      Correction_im	Correction_Err_re	Correction_Err_im" << "\n";
-//
-//				for (int g=0; g<NUM_G; ++g) {
-//					char buffer[250];
-//					sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e %16.8e\n",
-//							link_patterns[d],
-//							timeslices[t],
-//							g,
-//							TrM_inv_av_LP[d][p][g][t].elem().elem().elem().real(),
-//							TrM_inv_av_LP[d][p][g][t].elem().elem().elem().imag(),
-//							TrM_inv_LP_err_r[d][p][g][t],
-//							TrM_inv_LP_err_i[d][p][g][t],
-//							TrM_inv_av_C[d][p][g][t].elem().elem().elem().real(),
-//							TrM_inv_av_C[d][p][g][t].elem().elem().elem().imag(),
-//							TrM_inv_C_err_r[d][p][g][t],
-//							TrM_inv_C_err_i[d][p][g][t]);
-//					std::string oline(buffer);
-//					fout_cr << oline;
-//				}  // for (int g=0; g<NUM_G; ++g)
-//
-//
-//			}  // for (int t=0; t<NumTs; ++t)
-//		}  // for disp
-//
-//		fout_cr.close();
-		
-		
 
-	
 	//-----------------------------
 	// Save number of iterations
 	//-----------------------------
@@ -1136,7 +578,7 @@ int main(int argc, char **argv) {
 	
 	// Start up the config
 	swatch.reset();
-	multi1d<LatticeColorMatrix> U(Nd);
+	multi1d<LatticeColorMatrix> U(Nd), U_tmp(Nd);
 	XMLReader gauge_file_xml, gauge_xml;
 	
 	// Start up the gauge field
@@ -1152,6 +594,11 @@ int main(int argc, char **argv) {
 									TheGaugeInitFactory::Instance().createObject(input.cfg.id, cfgtop,
 																				 input.cfg.path));
 		(*gaugeInit)(gauge_file_xml, gauge_xml, U);
+		U_tmp=U;
+		for(int t_shift=0;t_shift<input.t_src,t_shift++){
+			U=shift(U_tmp, BACKWARD, Nd-1);// shift the whole lattice so that the source is located at t=0.
+			U_tmp=U;
+		}
 	} catch (std::bad_cast) {
 		QDPIO::cerr << "DISCO: caught cast error" << std::endl;
 		QDP_abort(1);
@@ -1207,19 +654,8 @@ int main(int argc, char **argv) {
 	int restart_NrLP = input.param.noise_src.restart_NrLP;
 	double restart_factor = input.param.noise_src.restart_factor;
 	
-	bool dilute = input.param.noise_src.dilute;
-	int NumTs = input.param.noise_src.timeslices.size();
-	std::vector<int> timeslices;
-	for (int i = 0; i < NumTs; ++i)
-		timeslices.push_back(input.param.noise_src.timeslices[i]);
-	
-	
-	if (dilute) {
-		QDPIO::cout << "Calculate disconnected contribution on timeslice = ";
-		for (int i = 0; i < timeslices.size(); ++i)
-			QDPIO::cout << timeslices[i] << " ";
-		QDPIO::cout << std::endl;
-	}
+	QDPIO::cout << "Calculate disconnected contribution on timeslice = 0";
+	int t_src = input.param.noise_src.t_src;
 	
 	int num_checkp = input.param.checkpoint.size();
 	std::vector<Checkpoint_t> checkp;
@@ -1287,26 +723,13 @@ int main(int argc, char **argv) {
 	// Noise source (eta) and Solution (psi)
 	LatticeFermion eta, psi;
 	
-	// Variables for error analysis
-	ErrAnlyVars errAnly(NumDisp,NumMom,NumTs);
 	// Temp variables
-	Complex TrM_inv;
+	multi4d<Complex> TrM_inv(Max_Nr_LP,NumDisp,NumMom,Num_G);
 	LatticeFermion chi, shift_psi;
-#ifdef CALC_ERR_ERR
-	multi1d<multi3d<DComplex>> TrM_inv_est_LP_sum(NumDisp);
-	for (int d=0; d < NumDisp; ++d){
-		TrM_inv_est_LP_sum.resize(NumMom[d], NUM_G, NumTs);
-		for (int p=0; p < NumMom[d]; ++p)
-		for (int g=0; g < NUM_G; ++g)
-			for (int t=0; t < NumTs; ++t)
-				TrM_inv_est_LP_sum[d][p][g][t] = zero;
-	}
-#endif
 	
 	LatticeComplex corr_fn;
 	multi2d<DComplex> corr_fn_t;
 	
-	LatticeBoolean mask = false;
 	
 	// Machinery to do timeslice sums with
 	Set TS;
@@ -1448,12 +871,8 @@ int main(int argc, char **argv) {
 				QDP_abort(1);
 			}
 			
-			// Calculate only on the timeslices
-			if (dilute) {
-				for (int t = 0; t < NumTs; ++t)
-					mask |= Layout::latticeCoordinate(3) == timeslices[t];
-				eta = where(mask, eta, LatticeFermion(zero));
-			}
+			// Calculate only on the timeslices t=0
+			eta = where(Layout::latticeCoordinate(3) == 0, eta, LatticeFermion(zero));
 			
 			psi = zero;  // Initialize psi
 			
@@ -1502,25 +921,12 @@ int main(int argc, char **argv) {
 					else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2]->sft(corr_fn);
 					else corr_fn_t = phases[3]->sft(corr_fn);
 					for (int p=0; p<NumMom[d]; ++p){
-					for (int t = 0; t < NumTs; ++t) {
-						TrM_inv = corr_fn_t[p][timeslices[t]];
+						TrM_inv[count_lp][d][p][g] = corr_fn_t[p][0];
 						
 						// For scalar case, HPE should correct Tr(2 kappa I) = 24*kappa*L^3
 						if (g == 0 && use_HPE)
 							TrM_inv += 24.0 * kappa * pow(Layout::lattSize()[0], 3);
 						
-						errAnly.TrM_inv_sum_LP[d][p][g][t] += TrM_inv;
-						
-						// Statistical error estimation
-						errAnly.TrM_inv_LP_sqsum_r[d][p][g][t] += pow(
-																									   (double)TrM_inv.elem().elem().elem().real(), 2);
-						errAnly.TrM_inv_LP_sqsum_i[d][p][g][t] += pow(
-																									   (double)TrM_inv.elem().elem().elem().imag(), 2);
-						
-#ifdef CALC_ERR_ERR
-						TrM_inv_est_LP_sum[d][p][g][t] += TrM_inv;
-#endif
-					}//multi4d<DComplex> TrM_inv_C_HP(NumDisp, NumMom, NUM_G, NumTs);
 					}//for (int p = 0; p < NumMom; ++p)
 				}//for (int g = 0; g < NUM_G; ++g)
 			}//for (int d=0; d<NumDisp; ++d)
@@ -1534,237 +940,13 @@ int main(int argc, char **argv) {
 			<< " secs" << std::endl;
 			QDPIO::cout << std::endl;
 			
-			//--------------------------------------------------------------------
-			// Calculate correction to the above low-precision estimation
-			// Correction = (1 / Nr_HP) sum [ (|psi_j>_HP - |psi_j>_LP>) <eta_j| ]
-			// by using LP and HP results
-			//
-			// This part runs every Nr_LPHP_ratio times of LP iterations
-			//--------------------------------------------------------------------
-			if (Nr_LPHP_ratio > 0 && count_lp % Nr_LPHP_ratio == 0) {
-				swatch.reset();
-				swatch.start();
-				
-				QDPIO::cout << "TSM Correction Estimation Loop; iter = " << count_hp + 1
-				<< std::endl;
-				
-				// Temp variables
-				multi1d<multi3d<DComplex>> TrM_inv_C_HP(NumDisp);
-				multi1d<multi3d<DComplex>> TrM_inv_C_LP(NumDisp);
-				for (int d = 0; d < NumDisp; ++d){
-					TrM_inv_C_HP[d].resize(NumMom[d], NUM_G, NumTs);
-					TrM_inv_C_LP[d].resize(NumMom[d], NUM_G, NumTs);
-					for (int p=0; p<NumMom[d]; ++p)
-					for (int g = 0; g < NUM_G; ++g)
-						for (int t = 0; t < NumTs; ++t) {
-							TrM_inv_C_HP[d][p][g][t] = zero;
-							TrM_inv_C_LP[d][p][g][t] = zero;
-						}
-				}
-				
-				// Make noise source
-				if (NoiseSrcType == "Z2") {
-					z2_src(eta);
-					
-					// gaussian() and z2_src require normalization factor (1/sqrt(2))
-					eta *= INV_SQRT2;
-				} else if(NoiseSrcType ==  "POINT") {
-					LatticeFermion eta00;
-					zN_src(eta00,1);
-					// Make a source only at the origin (0,0,0,0)
-					eta=where((Layout::latticeCoordinate(0)+ Layout::latticeCoordinate(1) + Layout::latticeCoordinate(2)+Layout::latticeCoordinate(3)) == 0,eta00,LatticeFermion(zero));
-				} else if (NoiseSrcType == "GAUSSIAN") {
-					gaussian(eta);
-					
-					// gaussian() and z2_src require normalization factor (1/sqrt(2))
-					eta *= INV_SQRT2;
-				} else if (NoiseSrcType == "Z2REAL") {
-					zN_src(eta, 2);
-				} else if (NoiseSrcType == "Z4") {
-					zN_src(eta, 4);
-				} else {
-					QDPIO::cerr << "Error! Unknown noise source type " << NoiseSrcType
-					<< std::endl;
-					QDPIO::cerr << "Allowed types are Z2, Z2REAL, Z4 and GAUSSIAN."
-					<< std::endl;
-					QDP_abort(1);
-				}
-				
-				// Calculate only on the timeslices
-				if (dilute) {
-					for (int t = 0; t < NumTs; ++t)
-						mask |= Layout::latticeCoordinate(3) == timeslices[t];
-					eta = where(mask, eta, LatticeFermion(zero));
-				}
-				
-				//-----------------------------------------------------
-				// Low precision calculation with the same source
-				//-----------------------------------------------------
-				psi = zero;  // Initialize psi
-				
-				// Since qprop trashes the source, it should be copied safely
-				chi = eta;
-				
-				// Calculate psi by using Dirac Inverter with Low Precision
-				SystemSolverResults_t res2 = (*PP_LP)(psi, chi);
-				
-				// Hopping parameter expansion (HPE)
-				if (use_HPE) do_HPE(kappa, psi, M);
-				
-				// Calculate Tr(M^-1) = (1/N) sum_i <eta_i| \gamma |psi_i>
-				// Displace the source (covariantly) to form a new operator
-				
-				for (int d=0; d<NumDisp; ++d){
-					int disp=link_patterns[d];
-					//if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< disp <<std::endl;
-					shift_link(d,chi,psi,shift_psi,NumDisp_mom,NumDisp,disp,U);
-					
-
-					
-					for (int g = 0; g < NUM_G; ++g) {
-						corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
-						
-						if (d==0) corr_fn_t = phases[0]->sft(corr_fn);
-						else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1]->sft(corr_fn);
-						else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2]->sft(corr_fn);
-						else corr_fn_t = phases[3]->sft(corr_fn);
-						
-						// For the correction term, we don't need to add constant part Tr[2 kappa I]
-						for (int p=0; p<NumMom[d]; ++p){
-						for (int t = 0; t < NumTs; ++t)
-							TrM_inv_C_LP[d][p][g][t] = corr_fn_t[p][timeslices[t]];
-						}
-					}
-				
-				}//loop for (int d=0; d<NumDisp; ++d)
-				
-				//-----------------------------------------------------
-				// High precision calculation
-				//-----------------------------------------------------
-				// Result (psi) of Low precision inversion is used as a
-				// initial guess for this High precision calculation
-				
-				// Since qprop trashes the source, it should be copied safely
-				chi = eta;
-				
-				// High precision solver
-				// This is called every iteration because this is the only way to
-				// (re)initialize the inverter parameters of multigrid solver
-				// if allocating new pointer to a Handle, it deletes old pointer
-				PP_HP = S_f_HP->qprop(stateHP, input.param.inverter.invParamHP);
-				HP_inv_called = true;
-				
-				// Calculate psi by using Dirac Inverter with High Precision
-				res = (*PP_HP)(psi, chi);
-				
-				// Hopping parameter expansion (HPE)
-				if (use_HPE) do_HPE(kappa, psi, M);
-				
-				// Calculate Tr(M^-1) = (1/N) sum_i <eta_i| \gamma |psi_i>
-				// Displace the source (covariantly) to form a new operator
-				
-				for (int d=0; d<NumDisp; ++d){
-					int disp=link_patterns[d];
-					
-					//if(Layout::primaryNode()) std::cout << "calculating link "<< d << " in direction "<< link_patterns[d] <<std::endl;
-					
-					shift_link(d,chi,psi,shift_psi,NumDisp_mom,NumDisp,disp,U);
-					
-
-					
-					for (int g = 0; g < NUM_G; ++g) {
-						corr_fn = localInnerProduct(eta, gamma_ops(g) * shift_psi);
-						if (d==0) corr_fn_t = phases[0]->sft(corr_fn);
-						else if (d<NumDisp_mom && disp < 100) corr_fn_t = phases[1]->sft(corr_fn);
-						else if (d<NumDisp_mom && disp > 100) corr_fn_t = phases[2]->sft(corr_fn);
-						else corr_fn_t = phases[3]->sft(corr_fn);
-						
-						// For the correction term, we don't need to add constant part Tr[2 kappa I]
-						for(int p=0; p<NumMom[d]; ++p) {
-						for (int t = 0; t < NumTs; ++t)
-							TrM_inv_C_HP[d][p][g][t] = corr_fn_t[p][timeslices[t]];
-						}
-					}
-				
-				}
-				
-				//-----------------------------------------------------
-				// Calculate correction term
-				//-----------------------------------------------------
-				for (int d = 0; d < NumDisp; ++d)
-					for(int p=0; p<NumMom[d]; ++p)
-					for (int g = 0; g < NUM_G; ++g)
-						for (int t = 0; t < NumTs; ++t) {
-							TrM_inv = TrM_inv_C_HP[d][p][g][t] - TrM_inv_C_LP[d][p][g][t];
-							errAnly.TrM_inv_sum_C[d][p][g][t] += TrM_inv;
-							
-							// Statistical error estimation
-							errAnly.TrM_inv_C_sqsum_r[d][p][g][t] += pow(
-																	  (double)TrM_inv.elem().elem().elem().real(), 2);
-							errAnly.TrM_inv_C_sqsum_i[d][p][g][t] += pow(
-																	  (double)TrM_inv.elem().elem().elem().imag(), 2);
-							
-#ifdef CALC_ERR_ERR
-							DComplex TrM_inv_est_tmp = TrM_inv_est_LP_sum[d][p][g][t]/Nr_LPHP_ratio + TrM_inv;
-							errAnly.TrM_inv_est[d][p][g][t].push_back(TrM_inv_est_tmp);
-							
-							// Reinitialize
-							TrM_inv_est_LP_sum[d][p][g][t] = zero;
-#endif
-						}
-				
-				// Print time used
-				swatch.stop();
-				
-				QDPIO::cout << "TSM Correction loop (LP + HP): time= "
-				<< swatch.getTimeInSeconds() << " secs" << std::endl;
-				QDPIO::cout << std::endl;
-				
-				// Increase number of hp iteration counter
-				++count_hp;
-				
-			}  // if ( Nr_LPHP_ratio > 0  &&  i%Nr_LPHP_ratio == 0)
 			
-			//------------------------------------------
-			// Restart
-			//------------------------------------------
-			if (noise_input_version == 2) {
-				// Check whether restart is needed
-				if (count_lp == restart_NrLP && !Restarted) {
-					double ratio_C_LP_err, s_err_max, s_err_av;
-					check_acc(count_lp, count_hp, errAnly, timeslices, ratio_C_LP_err,
-							  s_err_max, s_err_av);
-					
-					// Restart the loop with new LP inverter parameters if the error of
-					// correction term is much larger than the error of LP term
-					if (ratio_C_LP_err > restart_factor) {
-						QDPIO::cout << "Restart with new LP inverter parameters!"
-						<< std::endl;
-						QDPIO::cout << "count_lp = " << count_lp << ", Cr_err / LP_err = "
-						<< ratio_C_LP_err << ", Err_scalar = " << s_err_max << std::endl;
-						
-						count_lp = 0;  // for-loop will increase this by 1 in the end of this block
-						count_hp = 0;
-						HP_inv_called = false;
-						Restarted = true;
-						errAnly = ErrAnlyVars(NumDisp,NumMom,NumTs);
-						PP_LP = S_f_LP->qprop(stateLP, input.param.noise_src.invParamLP_r);
-						// Note that checkout order is not reinitialized; it will be proceed from where it is
-					}  // if (ratio_C_LP_err > restart_factor)
-				}  // if (count_lp == restart_NrLP && !Restarted)
-			}  // if (noise_input_version == 2)
-			
+
 			//------------------------------------------
 			// Checkout or Finish
 			//------------------------------------------
 			if (count_lp >= Min_Nr_LP) {
 				// Calculate error of scalar channel (maximum value among timeslices)
-				double ratio_C_LP_err, s_err_max, s_err_av;
-				check_acc(count_lp, count_hp, errAnly, timeslices, ratio_C_LP_err,
-						  s_err_max, s_err_av);
-				
-				QDPIO::cout << "count_lp = " << count_lp << ", Cr_err / LP_err = "
-				<< ratio_C_LP_err << ", Err_scalar = " << s_err_max << std::endl;
 				
 				bool all_empty = true;
 				
@@ -1807,7 +989,7 @@ int main(int argc, char **argv) {
 						
 						if (chkout) {
 							// checkout
-							checkout(count_lp, count_hp, errAnly, checkp[idx_cp].OutFileName,link_dirs,link_max,
+							checkout(count_lp, count_hp, TrM_inv, checkp[idx_cp].OutFileName,link_dirs,link_max,
 									 timeslices, checkp[idx_cp].chkout_order, Restarted,phases);
 							checkp[idx_cp].chkout_order++;
 							
