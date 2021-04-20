@@ -344,7 +344,7 @@ void link_pattern(std::vector<int> &link_patterns, std::vector<int> &link_dirs, 
 //====================================================================
 // Calculate statistical error, and save results
 //====================================================================
-void checkout(int Nr_LP, int Nr_HP, multi4d<Complex> &TrM_inv, std::string out_fname, std::vector<int> &link_dirs, int link_max,int chkout_order, bool Restarted, SftMom* &phases) {
+void checkout(int Nr_LP, multi4d<Complex> &TrM_inv, std::string out_fname, std::vector<int> &link_dirs, int link_max,int chkout_order, bool Restarted, SftMom* &phases) {
 	std::vector<int> link_patterns;
 	link_pattern(link_patterns,link_dirs,link_max);
 	int NumDisp = link_patterns.size();
@@ -962,7 +962,7 @@ int main(int argc, char **argv) {
 						
 						if (chkout) {
 							// checkout
-							checkout(count_lp, count_hp, TrM_inv, checkp[idx_cp].OutFileName,link_dirs,link_max,
+							checkout(count_lp,TrM_inv, checkp[idx_cp].OutFileName,link_dirs,link_max,
 									  checkp[idx_cp].chkout_order, Restarted,phases);
 							checkp[idx_cp].chkout_order++;
 							
