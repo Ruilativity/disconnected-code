@@ -107,10 +107,7 @@ struct Params_t {
 	Inverter_t inverter;
 	NoiseSource_t noise_src;
 	Displacement_t displacement;
-	multi1d<int> mom2_list_local;
-	multi1d<int> mom2_list_1st_mom;
-	multi1d<int> mom2_list_2nd_mom;
-	multi1d<int> mom2_list_lamet;
+	multi1d<int> mom2_list;
 	multi1d<Checkpoint_t> checkpoint;
 	bool use_HPE;
 };
@@ -247,29 +244,11 @@ void read(XMLReader& xml, const std::string& path, Params_t& p) {
 	XMLReader paramtop(xml, path);
 	read(paramtop, "nrow", p.nrow);
 	
-	if (paramtop.count("mom2_list_local") > 0)
-		read(paramtop, "mom2_list_local", p.mom2_list_local);
+	if (paramtop.count("mom2_list") > 0)
+		read(paramtop, "mom2_list", p.mom2_list);
 	else {
-		p.mom2_list_local.resize(1);
-		p.mom2_list_local[0]=0;
-	}
-	if (paramtop.count("mom2_list_1st_mom") > 0)
-		read(paramtop, "mom2_list_1st_mom", p.mom2_list_1st_mom);
-	else {
-		p.mom2_list_1st_mom.resize(1);
-		p.mom2_list_1st_mom[0]=0;
-	}
-	if (paramtop.count("mom2_list_2nd_mom") > 0)
-		read(paramtop, "mom2_list_2nd_mom", p.mom2_list_2nd_mom);
-	else {
-		p.mom2_list_2nd_mom.resize(1);
-		p.mom2_list_2nd_mom[0]=0;
-	}
-	if (paramtop.count("mom2_list_lamet") > 0)
-		read(paramtop, "mom2_list_lamet", p.mom2_list_lamet);
-	else {
-		p.mom2_list_lamet.resize(1);
-		p.mom2_list_lamet[0]=0;
+		p.mom2_list.resize(1);
+		p.mom2_list[0]=0;
 	}
 	
 	if (paramtop.count("UseHPE") > 0)
@@ -702,7 +681,7 @@ int main(int argc, char **argv) {
 	
 	
 	
-	phases=new SftMom(input.param.mom2_list_local, origin_offs, mom_offset, false, j_decay);
+	phases=new SftMom(input.param.mom2_list, origin_offs, mom_offset, false, j_decay);
 	int NumMom=phases->numMom();
 	
 	// Noise source (eta) and Solution (psi)
