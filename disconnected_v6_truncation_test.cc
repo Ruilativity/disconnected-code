@@ -726,7 +726,7 @@ int main(int argc, char **argv) {
 	LatticeFermion eta, psi;
 	
 	// Temp variables
-	multi4d<Complex> TrM_inv(Max_Nr_LP,NumDisp,NumMom,Num_G);
+	multi4d<Complex> TrM_inv(Max_Nr_LP,NumDisp,NumMom,NUM_G);
 	LatticeFermion chi, shift_psi;
 	
 	LatticeComplex corr_fn;
@@ -927,7 +927,7 @@ int main(int argc, char **argv) {
 						
 						// For scalar case, HPE should correct Tr(2 kappa I) = 24*kappa*L^3
 						if (g == 0 && use_HPE)
-							TrM_inv += 24.0 * kappa * pow(Layout::lattSize()[0], 3);
+							TrM_inv[count_lp][d][p][g] += 24.0 * kappa * pow(Layout::lattSize()[0], 3);
 						
 					}//for (int p = 0; p < NumMom; ++p)
 				}//for (int g = 0; g < NUM_G; ++g)
