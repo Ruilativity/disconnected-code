@@ -374,7 +374,7 @@ void checkout(int Nr_LP, multi4d<Complex> &TrM_inv, std::string out_fname, std::
 			for (int d = 0; d < NumDisp_mom; ++d) {
 			for (int g = 0; g < NUM_G; ++g) {
 				char buffer[250];
-				sprintf(buffer, "%d %3d %2d %16.8e %16.8e %16.8e %16.8e\n",
+				sprintf(buffer, "%d %3d %2d %16.8e %16.8e\n",
 						lp_idx,link_patterns[d] , g,
 						TrM_inv[lp_idx][d][p][g].elem().elem().elem().real(),
 						TrM_inv[lp_idx][d][p][g].elem().elem().elem().imag()
@@ -781,7 +781,7 @@ int main(int argc, char **argv) {
 		//--------------------------------------------------------------------
 		
 		
-		for (int count_lp = 1; count_lp <= Max_Nr_LP; ++count_lp) {
+		for (int count_lp = 0; count_lp < Max_Nr_LP; ++count_lp) {
 			swatch.reset();
 			swatch.start();
 			
