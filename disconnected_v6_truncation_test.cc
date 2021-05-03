@@ -571,7 +571,7 @@ int main(int argc, char **argv) {
 		QDPIO::cout << "Before shift (0,0,0,"<< t_src <<"):" << std::endl;
 		multi1d<int> coord(4);
 		coord[0]=coord[1]=coord[2]=0; coord[3]=t_src;
-		QDPIO::cout << peekSite(U,coord) << std::endl;
+		QDPIO::cout << peekSite(U[0],coord) << std::endl;
 		if(t_src<=Layout::lattSize()[Nd-1]/2){
 			for(int t_shift=0;t_shift<t_src;t_shift++){
 				for(int mu=0;mu<Nd-1;mu++){
@@ -590,9 +590,8 @@ int main(int argc, char **argv) {
 		}
 		QDPIO::cout << "Checking lattice shifts:" << std::endl;
 		QDPIO::cout << "After shift (0,0,0,0):" << std::endl;
-		multi1d<int> coord(4);
-		coord[0]=coord[1]=coord[2]=coord[3]=0;
-		QDPIO::cout << peekSite(U,coord) << std::endl;
+		coord[3]=0;
+		QDPIO::cout << peekSite(U[0],coord) << std::endl;
 	} catch (std::bad_cast) {
 		QDPIO::cerr << "DISCO: caught cast error" << std::endl;
 		QDP_abort(1);
