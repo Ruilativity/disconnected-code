@@ -576,7 +576,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		else{
-			for(int t_shift=0;t_shift<=Layout::lattSize(:QDP)[Nd-1]-t_src;t_shift++){
+			for(int t_shift=0;t_shift<=Layout::lattSize()[Nd-1]-t_src;t_shift++){
 				for(int mu=0;mu<Nd-1;mu++){
 				U[mu]=shift(U_tmp[mu], FORWARD, Nd-1);// shift the whole lattice BWD so that the source is located at t=0.
 				U_tmp[mu]=U[mu];
