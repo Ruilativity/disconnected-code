@@ -571,19 +571,19 @@ int main(int argc, char **argv) {
 		QDPIO::cout << "Before shift (0,0,0,"<< t_src <<"):" << std::endl;
 		multi1d<int> coord(4);
 		coord[0]=coord[1]=coord[2]=0; coord[3]=t_src;
-		QDPIO::cout << peekSite(U[0],coord).elem(0).elem(0) << std::endl;
+		QDPIO::cout << peekSite(U[0],coord).elem().elem(0).elem(0) << std::endl;
 		if(t_src<=Layout::lattSize()[Nd-1]/2){
 			for(int t_shift=0;t_shift<t_src;t_shift++){
 				for(int mu=0;mu<Nd-1;mu++){
-				U[mu]=shift(U_tmp[mu], BACKWARD, Nd-1);// shift the whole lattice FWD so that the source is located at t=0.
+				U[mu]=shift(U_tmp[mu], FORWARD, Nd-1);// shift the gauge field FWD so that the source is located at t=0.
 				U_tmp[mu]=U[mu];
 				}
 			}
 		}
 		else{
-			for(int t_shift=0;t_shift<=Layout::lattSize()[Nd-1]-t_src;t_shift++){
+			for(int t_shift=t_src;t_shift<Layout::lattSize()[Nd-1];t_shift++){
 				for(int mu=0;mu<Nd-1;mu++){
-				U[mu]=shift(U_tmp[mu], FORWARD, Nd-1);// shift the whole lattice BWD so that the source is located at t=0.
+				U[mu]=shift(U_tmp[mu], BACKWARD, Nd-1);// shift the gauge field BWD so that the source is located at t=0.
 				U_tmp[mu]=U[mu];
 				}
 			}
@@ -591,7 +591,7 @@ int main(int argc, char **argv) {
 		QDPIO::cout << "Checking lattice shifts:" << std::endl;
 		QDPIO::cout << "After shift (0,0,0,0):" << std::endl;
 		coord[3]=0;
-		QDPIO::cout << peekSite(U[0],coord).elem(0).elem(0) << std::endl;
+		QDPIO::cout << peekSite(U[0],coord).elem().elem(0).elem(0) << std::endl;
 	} catch (std::bad_cast) {
 		QDPIO::cerr << "DISCO: caught cast error" << std::endl;
 		QDP_abort(1);
