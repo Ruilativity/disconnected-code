@@ -33,3 +33,7 @@ Initialize the LP results and correction terms to 0. In case that N_LP or N_HP=0
 2021-01-19:
 fix the random phase for different spin & color components, because they're already diagonal in the dilution procedure
 
+2021-05-06:
+v_6_truncation shift the gauge field for the full lattice with t_src > 0, manually update the RNG after each lattice random number is generated, so that the full lattice and truncated lattice generate the same random source with the same RNG input.
+
+
