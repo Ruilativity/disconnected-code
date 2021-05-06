@@ -574,7 +574,7 @@ int main(int argc, char **argv) {
 		QDPIO::cout << peekSite(U[0],coord).elem().elem().elem(0,0) << std::endl;
 		if(t_src<=Layout::lattSize()[Nd-1]/2){
 			for(int t_shift=0;t_shift<t_src;t_shift++){
-				for(int mu=0;mu<Nd-1;mu++){
+				for(int mu=0;mu<Nd;mu++){
 				U[mu]=shift(U_tmp[mu], FORWARD, Nd-1);// shift the gauge field FWD so that the source is located at t=0.
 				U_tmp[mu]=U[mu];
 				}
@@ -582,7 +582,7 @@ int main(int argc, char **argv) {
 		}
 		else{
 			for(int t_shift=t_src;t_shift<Layout::lattSize()[Nd-1];t_shift++){
-				for(int mu=0;mu<Nd-1;mu++){
+				for(int mu=0;mu<Nd;mu++){
 				U[mu]=shift(U_tmp[mu], BACKWARD, Nd-1);// shift the gauge field BWD so that the source is located at t=0.
 				U_tmp[mu]=U[mu];
 				}
@@ -855,7 +855,7 @@ int main(int argc, char **argv) {
 			}
 			
 			// Calculate only on the timeslices t=0
-			eta = where(Layout::latticeCoordinate(3) == 0, eta, LatticeFermion(zero));
+			eta = where(Layout::latticeCoordinate(Nd-1) == 0, eta, LatticeFermion(zero));
 			
 			psi = zero;  // Initialize psi
 			
