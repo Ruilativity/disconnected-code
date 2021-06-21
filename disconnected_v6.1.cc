@@ -1249,24 +1249,16 @@ int main(int argc, char **argv) {
 	
 	
 	
-	// some dummy variables used for mom2_max functions
-	multi1d<SftMomSrcPos_t> origin_offs(1);
-	origin_offs[0].src_pos.resize(Nd);
-	origin_offs[0].src_pos=0;
-	origin_offs[0].t_min = 0;
+	
 	int j_decay=Nd-1;
-    origin_offs[0].t_max = Layout::lattSize()[j_decay] - 1;
-	multi1d<int> mom_offset;
-	mom_offset.resize(Nd-1);  /*!< Origin for the momentum */
-    mom_offset = 0;
-	//end
+    
 	
 	
 	
-	phases[0]=new SftMom(input.param.mom2_max_local, origin_offs, mom_offset, false, j_decay);
-	phases[1]=new SftMom(input.param.mom2_max_1st_mom, origin_offs, mom_offset, false, j_decay);
-	phases[2]=new SftMom(input.param.mom2_max_2nd_mom, origin_offs, mom_offset, false, j_decay);
-	phases[3]=new SftMom(input.param.mom2_max_lamet, origin_offs, mom_offset, false, j_decay);
+	phases[0]=new SftMom(input.param.mom2_max_local, false, j_decay);
+	phases[1]=new SftMom(input.param.mom2_max_1st_mom, false, j_decay);
+	phases[2]=new SftMom(input.param.mom2_max_2nd_mom, false, j_decay);
+	phases[3]=new SftMom(input.param.mom2_max_lamet, false, j_decay);
 	multi1d<int> NumMom(NumDisp);
 	for (int d=0;d<NumDisp;++d){
 		if (d==0) NumMom[d]=phases[0]->numMom();
